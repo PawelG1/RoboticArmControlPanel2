@@ -7,6 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControlPanel.Domain", "Cont
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{EC1530A9-D0ED-4E36-ADAC-B13E25EFB5F6}"
 	ProjectSection(SolutionItems) = preProject
+		CommandsExamplesAndStructure.md = CommandsExamplesAndStructure.md
 		projStructurePlanning.md = projStructurePlanning.md
 	EndProjectSection
 EndProject
@@ -24,6 +25,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControlPanel.Tests", "ControlPanel.Tests\ControlPanel.Tests.csproj", "{3D02D823-B329-4054-8138-7E8BC228832D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControlPanel.DI", "ControlPanel.DI\ControlPanel.DI.csproj", "{FF21A797-62A6-45B0-8111-D948EECBF04C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{ED41709A-276E-47C9-8893-F1EBF045D977}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
