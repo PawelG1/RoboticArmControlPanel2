@@ -12,14 +12,14 @@ namespace ControlPanel.DI
         /// <summary> Dependency Injection Container </summary>
 
         public static IServiceCollection AddControlPanelProductionCollection(
-               this IServiceCollection services
-            ) {
+               this IServiceCollection services)
+        {
 
             //infrastructure
 
             //repositories
             services.AddSingleton<IActuatorRepository, ActuatorInMemoryRepository>();
-            
+
             //hardware
             services.AddSingleton<ISerialCommunication, SerialCommunicationService>();
             services.AddSingleton(new SerialPortController(
@@ -44,6 +44,12 @@ namespace ControlPanel.DI
             // Use Cases
             services.AddScoped<MoveActuatorUseCase>();
             services.AddScoped<StopActuatorUseCase>();
+        }
+
+        public static T GetRequiredService<T>(this IServiceCollection services) where T : class
+        {
+            var serviceProvider = services.BuildServiceProvider();
+            return serviceProvider.GetRequiredService<T>();
         }
     }
 }
