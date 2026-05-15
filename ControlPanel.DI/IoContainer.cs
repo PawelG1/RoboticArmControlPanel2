@@ -46,10 +46,5 @@ namespace ControlPanel.DI
             services.AddScoped<StopActuatorUseCase>();
         }
 
-        public static T GetRequiredService<T>(this IServiceCollection services) where T : class
-        {
-            var serviceProvider = services.BuildServiceProvider();
-            return serviceProvider.GetRequiredService<T>();
-        }
     }
 }

@@ -27,14 +27,13 @@ namespace ControlPanel.WPF.Services
                     throw new ArgumentException($"No view found for view model of type {viewModel.GetType().Name}");
             }
         }
-        public Task Show(BaseViewModel viewModel)
+        public void Show(BaseViewModel viewModel)
         {
             Window window = GetViewMatchingViewModel(viewModel);
             window.Show();
-            return Task.CompletedTask;
         }
 
-        public Task ShowDialog()
+        public void ShowDialog()
         {
             throw new NotImplementedException();
         }

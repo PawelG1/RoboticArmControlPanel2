@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows.Input;
 
 namespace ControlPanel.Presentation.WPF.Common
@@ -12,15 +10,13 @@ namespace ControlPanel.Presentation.WPF.Common
 
         public RelayCommand(Action<object> execute, Func<object, bool>? canExecute = null)
         {
-            _execute = execute;
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute)); 
             _canExecute = canExecute;
         }
 
-        public event EventHandler? CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
+        public event EventHandler? CanExecuteChanged;
+
+        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
         public bool CanExecute(object? parameter)
         {

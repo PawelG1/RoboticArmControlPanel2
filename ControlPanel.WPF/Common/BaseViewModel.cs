@@ -9,10 +9,7 @@ namespace ControlPanel.Presentation.WPF.Common
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
+        public virtual void Dispose() { }
 
         public void NotifyPropertyChanged(string propertyName = "")
         {

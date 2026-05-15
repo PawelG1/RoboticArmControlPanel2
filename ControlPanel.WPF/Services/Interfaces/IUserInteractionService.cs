@@ -8,8 +8,8 @@ namespace ControlPanel.WPF.Services.Interfaces
 {
     public interface IUserInteractionService
     {
-        Task Show(BaseViewModel viewModel);
-        Task ShowDialog();
+        void Show(BaseViewModel viewModel);
+        void ShowDialog();
         UserControl GetView(BaseViewModel viewModel);
     }
 }

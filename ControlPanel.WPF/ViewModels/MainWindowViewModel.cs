@@ -1,10 +1,5 @@
 ﻿using ControlPanel.Presentation.WPF.Common;
-using ControlPanel.WPF.Services;
 using ControlPanel.WPF.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -16,7 +11,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         public MainWindowViewModel(IUserInteractionService userInteractionService) {
             _userInteractionService = userInteractionService;
             OpenConfigurationWindowCommand = new RelayCommand(OpenConfigurationWindow);
-            CurrentView = _userInteractionService.GetView(new HomePageViewModel());
+            _currentView = _userInteractionService.GetView(new HomePageViewModel());
         }
 
         private string _title = "Main Window";
