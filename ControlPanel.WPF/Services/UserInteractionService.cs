@@ -56,5 +56,10 @@ namespace ControlPanel.WPF.Services
                     throw new ArgumentException($"No page found for view model of type {viewModel.GetType().Name}");
             }
         }
+
+        public void ShowError(string message, string title = "Error")
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -22,5 +22,10 @@ namespace ControlPanel.Presentation.WPF.Views.Pages
         {
             InitializeComponent();
         }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ((TextBox)sender).ScrollToEnd();
+        }
     }
 }

@@ -11,5 +11,6 @@ namespace ControlPanel.WPF.Services.Interfaces
         void Show(BaseViewModel viewModel);
         void ShowDialog();
         UserControl GetView(BaseViewModel viewModel);
+        void ShowError(string message, string title = "Error");
     }
 }

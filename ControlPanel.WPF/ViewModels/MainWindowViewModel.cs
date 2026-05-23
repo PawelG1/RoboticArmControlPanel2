@@ -1,4 +1,5 @@
-﻿using ControlPanel.Presentation.WPF.Common;
+﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.Presentation.WPF.Common;
 using ControlPanel.WPF.Services.Interfaces;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -8,8 +9,10 @@ namespace ControlPanel.Presentation.WPF.ViewModels
     public class MainWindowViewModel : BaseViewModel
     {
         private readonly IUserInteractionService _userInteractionService;
-        public MainWindowViewModel(IUserInteractionService userInteractionService) {
+        private readonly ISerialCommunication _serialCommunication;
+        public MainWindowViewModel(IUserInteractionService userInteractionService, ISerialCommunication serialCommunication) {
             _userInteractionService = userInteractionService;
+            _serialCommunication = serialCommunication;
             OpenConfigurationWindowCommand = new RelayCommand(OpenConfigurationWindow);
             _currentView = _userInteractionService.GetView(new HomePageViewModel());
         }
@@ -41,7 +44,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
         private void OpenConfigurationWindow(object _)
         {
-            CurrentView = _userInteractionService.GetView(new ConfigurationViewModel());
+            CurrentView = _userInteractionService.GetView(new ConfigurationViewModel(_userInteractionService, _serialCommunication));
         }
 
     }

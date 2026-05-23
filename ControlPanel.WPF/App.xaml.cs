@@ -16,11 +16,7 @@ namespace ControlPanel.WPF
             var services = new ServiceCollection();
 
             services.AddControlPanelProductionCollection();
-            services.AddSingleton<IUserInteractionService, UserInteractionService>();
-
-            services.AddTransient<MainWindowViewModel>();
-            services.AddTransient<HomePageViewModel>();
-            services.AddTransient<ConfigurationViewModel>();
+            AddPresentationLayerServices(services);
 
             _serviceProvider = services.BuildServiceProvider();
         }
@@ -31,6 +27,14 @@ namespace ControlPanel.WPF
             var navigationService = _serviceProvider.GetRequiredService<IUserInteractionService>();
             var mainVm = _serviceProvider.GetRequiredService<MainWindowViewModel>();
             navigationService.Show(mainVm);
+        }
+
+        protected void AddPresentationLayerServices(IServiceCollection services)
+        {
+            services.AddSingleton<IUserInteractionService, UserInteractionService>();
+            services.AddTransient<MainWindowViewModel>();
+            services.AddTransient<HomePageViewModel>();
+            services.AddTransient<ConfigurationViewModel>();
         }
     }
 }

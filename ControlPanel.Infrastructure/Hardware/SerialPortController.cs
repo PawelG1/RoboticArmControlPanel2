@@ -16,7 +16,7 @@ namespace ControlPanel.Infrastructure.Hardware
         LengthPrefixUInt32LittleEndian
     }
 
-    public class SerialPortController
+    public class SerialPortController : IDisposable
     {
         private readonly string _portName;
         private readonly Int32 _baudRate;
@@ -28,10 +28,9 @@ namespace ControlPanel.Infrastructure.Hardware
         private readonly int _writeTimeout = 500; //default write timeout in milliseconds
 
         private readonly SerialPort _serialPort;
-        
         private readonly SemaphoreSlim _requestGate = new(1, 1);
-
         private const int MaxFramePayloadBytes = 1024 * 1024;
+        private StringBuilder _messagesLogger;
 
         public SerialPortController(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits, Handshake handshake = Handshake.None)
         {
@@ -43,7 +42,30 @@ namespace ControlPanel.Infrastructure.Hardware
             _handshake = handshake;
 
             _serialPort = new SerialPort();
+            _messagesLogger = new StringBuilder();
             ConfigureSerialPort();
+            _serialPort.DataReceived += AddOnDataReceivedLogMessage;
+        }
+        public void Dispose()
+        {
+            _serialPort.DataReceived -= AddOnDataReceivedLogMessage;
+            _serialPort.Dispose();
+        }
+
+        public void SetPortName(string portName)
+        {
+            if (string.IsNullOrEmpty(portName) || !portName.ToLower().Contains("com"))
+            {
+                throw new ArgumentException($"Selected port name is incorrect: {portName}");
+            }
+            if (_serialPort.IsOpen)
+                throw new AccessViolationException($"Selected port is already open {portName}");
+            _serialPort.PortName = portName;
+        }
+
+        public bool GetPortStatus()
+        {
+            return _serialPort.IsOpen;
         }
 
         public void SetReadTimeout(int timeout)
@@ -91,6 +113,11 @@ namespace ControlPanel.Infrastructure.Hardware
             }
         }
 
+        public static string[] GetSerialPorts()
+        {
+            return SerialPort.GetPortNames();
+        }
+
         public async Task<bool> WriteToSerialPort(string data)
         {
             try
@@ -115,22 +142,28 @@ namespace ControlPanel.Infrastructure.Hardware
 
         public string? ReadFromSerialPort()
         {
-            try
+ 
+            if (_serialPort.IsOpen)
             {
-                if (_serialPort.IsOpen)
-                {
-                    return _serialPort.ReadLine();
-                }
-                else
-                {
-                    Console.WriteLine("Serial port is not open.");
-                    return null;
-                }
+                return _serialPort.ReadLine();
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error reading from serial port: {ex.Message}");
-                return null;
+                throw new IOException("Serial port is not open.");
+            }
+
+
+        }
+
+        public EventHandler<string>? OnMessageReceived { get; set; }
+
+        protected void AddOnDataReceivedLogMessage(object sender, SerialDataReceivedEventArgs e)
+        {
+            string readData = _serialPort.ReadExisting();
+            _messagesLogger.AppendLine(readData);
+            if (OnMessageReceived != null)
+            {
+                OnMessageReceived.Invoke(this, readData);
             }
         }
 
@@ -278,6 +311,10 @@ namespace ControlPanel.Infrastructure.Hardware
             _serialPort.Handshake = _handshake;
             _serialPort.ReadTimeout = _readTimeout;
             _serialPort.WriteTimeout = _writeTimeout;
+
+            _serialPort.DtrEnable = true; // Enable DTR to ensure Arduino resets on connect, can be adjusted based on hardware needs
+            _serialPort.RtsEnable = true; // Enable RTS if needed by the hardware, can be adjusted
         }
+
     }
 }

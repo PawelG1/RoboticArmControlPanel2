@@ -24,7 +24,7 @@ namespace ControlPanel.DI
             services.AddSingleton<ISerialCommunication, SerialCommunicationService>();
             services.AddSingleton(new SerialPortController(
                 portName: "COM3",
-                baudRate: 9600,
+                baudRate: 115200,
                 parity: System.IO.Ports.Parity.None,
                 dataBits: 8,
                 stopBits: System.IO.Ports.StopBits.One
