@@ -10,9 +10,11 @@ namespace ControlPanel.Presentation.WPF.ViewModels
     {
         private readonly IUserInteractionService _userInteractionService;
         private readonly ISerialCommunication _serialCommunication;
-        public MainWindowViewModel(IUserInteractionService userInteractionService, ISerialCommunication serialCommunication) {
+        private readonly IRobotStateService _robotStateService;
+        public MainWindowViewModel(IUserInteractionService userInteractionService, ISerialCommunication serialCommunication, IRobotStateService robotStateService) {
             _userInteractionService = userInteractionService;
             _serialCommunication = serialCommunication;
+            _robotStateService = robotStateService;
             OpenConfigurationWindowCommand = new RelayCommand(OpenConfigurationWindow);
             _currentView = _userInteractionService.GetView(new HomePageViewModel());
         }
@@ -44,7 +46,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
         private void OpenConfigurationWindow(object _)
         {
-            CurrentView = _userInteractionService.GetView(new ConfigurationViewModel(_userInteractionService, _serialCommunication));
+            CurrentView = _userInteractionService.GetView(new ConfigurationViewModel(_userInteractionService, _serialCommunication, _robotStateService));
         }
 
     }

@@ -1,12 +1,12 @@
 ﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Services;
+using ControlPanel.Domain.Entities;
 using ControlPanel.Presentation.WPF.Common;
 using ControlPanel.WPF;
 using ControlPanel.WPF.Services.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace ControlPanel.Presentation.WPF.ViewModels
 {
@@ -14,9 +14,11 @@ namespace ControlPanel.Presentation.WPF.ViewModels
     {
         private ISerialCommunication _serialCommunication;
         private IUserInteractionService _userInteractionService;
-        public ConfigurationViewModel(IUserInteractionService userInteractionService,ISerialCommunication serialCommunication) {
+        private IRobotStateService _robotStateService;
+        public ConfigurationViewModel(IUserInteractionService userInteractionService,ISerialCommunication serialCommunication, IRobotStateService robotStateService) {
             _serialCommunication = serialCommunication;
             _userInteractionService = userInteractionService;
+            _robotStateService = robotStateService;
             _title = "Configuration Window";
 
             SetUpDefaultConnection();
@@ -67,6 +69,17 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
         }
 
+        private string _listOfActuatorsAsText = "";
+        public string ListOfActuatorsAsText
+        {
+            get => _listOfActuatorsAsText;
+            set
+            {
+                _listOfActuatorsAsText = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         private string _communicationLog = "";
         public string CommunicationLog
         {
@@ -93,12 +106,13 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
         public ICommand ConnectCommand { get; set; }
 
-        public void Connect(object _)
+        public async void Connect(object _)
         {
             try
             {
                 _serialCommunication.ConfigureConnection(SelectedComPortName);
                 _serialCommunication.Connect();
+
             }catch(Exception e)
             {
                 _userInteractionService.ShowError("Failed to connect to the selected COM port. :" + e.Message);
@@ -131,7 +145,23 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             App.Current.Dispatcher.Invoke(() =>
             {
                 CommunicationLog += $"{message}\n";
+                ListOfActuatorsAsText = GetAllActuatorsNamesAndValuesAsText();
             });
+        }
+
+        private string GetAllActuatorsNamesAndValuesAsText()
+        {
+            StringBuilder stringBuilder = new();
+            var actuators = _robotStateService.Robot.GetAllActuators();
+            if (actuators == null)
+                return "";
+            if (actuators.Count() != 0)
+                stringBuilder.Append("Actuators:\n");
+            foreach(var actuator in actuators)
+            {
+                stringBuilder.Append($"\tId: {actuator.GetId} Current Angle: {actuator.GetCurrentAngle}\n");
+            }
+            return stringBuilder.ToString();
         }
 
     }

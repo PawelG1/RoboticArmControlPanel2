@@ -1,9 +1,7 @@
-﻿using System;
-using System.IO;
-using System.IO.Ports;
+﻿using System.IO.Ports;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Text.Json;
+
 
 namespace ControlPanel.Infrastructure.Hardware
 {
@@ -30,7 +28,9 @@ namespace ControlPanel.Infrastructure.Hardware
         private readonly SerialPort _serialPort;
         private readonly SemaphoreSlim _requestGate = new(1, 1);
         private const int MaxFramePayloadBytes = 1024 * 1024;
-        private StringBuilder _messagesLogger;
+
+        private SerialMessageFraming _framing = SerialMessageFraming.Newline;
+        private CancellationTokenSource? _readCts;
 
         public SerialPortController(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits, Handshake handshake = Handshake.None)
         {
@@ -42,13 +42,12 @@ namespace ControlPanel.Infrastructure.Hardware
             _handshake = handshake;
 
             _serialPort = new SerialPort();
-            _messagesLogger = new StringBuilder();
             ConfigureSerialPort();
-            _serialPort.DataReceived += AddOnDataReceivedLogMessage;
         }
         public void Dispose()
         {
-            _serialPort.DataReceived -= AddOnDataReceivedLogMessage;
+            _readCts?.Cancel();
+            _readCts?.Dispose();
             _serialPort.Dispose();
         }
 
@@ -85,6 +84,8 @@ namespace ControlPanel.Infrastructure.Hardware
                 if (!_serialPort.IsOpen)
                 {
                     _serialPort.Open();
+                    _readCts = new CancellationTokenSource();
+                    Task.Run(() => ReadLoop(_readCts.Token));
                 }
                 return true;
             }
@@ -99,6 +100,9 @@ namespace ControlPanel.Infrastructure.Hardware
         {
             try
             {
+                _readCts?.Cancel();
+                _readCts?.Dispose();
+                _readCts = null;
                 if (_serialPort.IsOpen)
                 {
                     _serialPort.Close();
@@ -155,17 +159,29 @@ namespace ControlPanel.Infrastructure.Hardware
 
         }
 
-        public EventHandler<string>? OnMessageReceived { get; set; }
-
-        protected void AddOnDataReceivedLogMessage(object sender, SerialDataReceivedEventArgs e)
+        private async Task ReadLoop(CancellationToken ct)
         {
-            string readData = _serialPort.ReadExisting();
-            _messagesLogger.AppendLine(readData);
-            if (OnMessageReceived != null)
+            while(!ct.IsCancellationRequested && _serialPort.IsOpen)
             {
-                OnMessageReceived.Invoke(this, readData);
+                try
+                {
+                    string? message = _framing switch
+                    {
+                        SerialMessageFraming.Newline => _serialPort.ReadLine(),
+                        SerialMessageFraming.LengthPrefixUInt32LittleEndian => ReadLengthPrefixedUtf8(),
+                        _ => null
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(message))
+                        OnMessageReceived?.Invoke(this, message);
+                }
+                catch (TimeoutException) { }
+                catch (OperationCanceledException) { break; }
+                catch (IOException) { break; }
             }
         }
+
+        public EventHandler<string>? OnMessageReceived { get; set; }
 
         /// <summary>
         /// Wysyła ramkę i czyta odpowiedź tą samą konwencją na puli wątków, więc UI może robić <c>await</c> bez blokowania.
@@ -301,7 +317,7 @@ namespace ControlPanel.Infrastructure.Hardware
             }
         }
 
-        private void ConfigureSerialPort()
+        private void ConfigureSerialPort(SerialMessageFraming framing = SerialMessageFraming.Newline)
         {
             _serialPort.PortName = _portName;
             _serialPort.BaudRate = _baudRate;
@@ -311,6 +327,7 @@ namespace ControlPanel.Infrastructure.Hardware
             _serialPort.Handshake = _handshake;
             _serialPort.ReadTimeout = _readTimeout;
             _serialPort.WriteTimeout = _writeTimeout;
+            _framing = framing;
 
             _serialPort.DtrEnable = true; // Enable DTR to ensure Arduino resets on connect, can be adjusted based on hardware needs
             _serialPort.RtsEnable = true; // Enable RTS if needed by the hardware, can be adjusted

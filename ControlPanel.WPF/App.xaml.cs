@@ -1,4 +1,5 @@
-﻿using ControlPanel.DI;
+﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.DI;
 using ControlPanel.Presentation.WPF.ViewModels;
 using ControlPanel.WPF.Services;
 using ControlPanel.WPF.Services.Interfaces;
@@ -24,8 +25,14 @@ namespace ControlPanel.WPF
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            
             var navigationService = _serviceProvider.GetRequiredService<IUserInteractionService>();
             var mainVm = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+            var actuatorRepo = _serviceProvider.GetRequiredService<IActuatorRepository>();
+            
+            var robotState = _serviceProvider.GetRequiredService<IRobotStateService>();
+            robotState.StartListening();
+
             navigationService.Show(mainVm);
         }
 

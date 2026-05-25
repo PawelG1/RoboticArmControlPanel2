@@ -1,5 +1,7 @@
 ﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Services;
 using ControlPanel.Application.UseCases;
+using ControlPanel.Domain.Entities;
 using ControlPanel.Infrastructure;
 using ControlPanel.Infrastructure.Hardware;
 using ControlPanel.Infrastructure.Persistence.InMemory;
@@ -32,6 +34,9 @@ namespace ControlPanel.DI
 
             //application
             RegisterApplicationServices(services);
+
+            //services.AddSingleton<Robot>();
+            services.AddSingleton<IRobotStateService, RobotStateService>();
 
             return services;
         }
