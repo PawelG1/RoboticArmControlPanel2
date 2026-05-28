@@ -20,7 +20,6 @@ namespace ControlPanel.DI
             //infrastructure
 
             //repositories
-            services.AddSingleton<IActuatorRepository, ActuatorInMemoryRepository>();
 
             //hardware
             services.AddSingleton<ISerialCommunication, SerialCommunicationService>();
@@ -35,9 +34,8 @@ namespace ControlPanel.DI
             //application
             RegisterApplicationServices(services);
 
-            //services.AddSingleton<Robot>();
+            services.AddSingleton<Robot>();
             services.AddSingleton<IRobotStateService, RobotStateService>();
-
             return services;
         }
 
@@ -47,8 +45,10 @@ namespace ControlPanel.DI
         private static void RegisterApplicationServices(IServiceCollection services)
         {
             // Use Cases
-            services.AddScoped<MoveActuatorUseCase>();
-            services.AddScoped<StopActuatorUseCase>();
+            services.AddTransient<IRobotControlService, RobotControlService>();
+            services.AddTransient<MoveActuatorUseCase>();
+            services.AddTransient<StopActuatorUseCase>();
+            services.AddTransient<StopAllActuatorsUseCase>();
         }
 
     }

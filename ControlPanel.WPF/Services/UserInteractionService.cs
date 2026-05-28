@@ -52,6 +52,11 @@ namespace ControlPanel.WPF.Services
                     {
                         DataContext = configurationViewModel
                     };
+                case SimpleControlViewModel simpleControlViewModel:
+                    return new SimpleControlView()
+                    {
+                        DataContext = simpleControlViewModel
+                    };
                 default:
                     throw new ArgumentException($"No page found for view model of type {viewModel.GetType().Name}");
             }

@@ -28,7 +28,7 @@ namespace ControlPanel.WPF
             
             var navigationService = _serviceProvider.GetRequiredService<IUserInteractionService>();
             var mainVm = _serviceProvider.GetRequiredService<MainWindowViewModel>();
-            var actuatorRepo = _serviceProvider.GetRequiredService<IActuatorRepository>();
+            //var actuatorRepo = _serviceProvider.GetRequiredService<IActuatorRepository>();
             
             var robotState = _serviceProvider.GetRequiredService<IRobotStateService>();
             robotState.StartListening();

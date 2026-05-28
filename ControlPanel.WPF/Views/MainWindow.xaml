@@ -20,7 +20,8 @@
                 VerticalAlignment="Center"
                 Text="{Binding Title}" />
             <TextBlock HorizontalAlignment="Center" Text="MENU" />
-            <Button Command="{Binding OpenConfigurationWindowCommand}" Content="Open Configuration" />
+            <Button Command="{Binding OpenConfigurationPageCommand}" Content="Open Configuration" />
+            <Button Command="{Binding OpenSimpleControlPageCommand}" Content="Open Simple Control" />
 
         </StackPanel>
         <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />

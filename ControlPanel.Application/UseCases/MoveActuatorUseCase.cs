@@ -8,44 +8,37 @@ namespace ControlPanel.Application.UseCases
 {
     public class MoveActuatorUseCase
     {
-        private readonly IActuatorRepository _actuatorRepository;
         private readonly ISerialCommunication _serialCommunication;
+        private readonly Robot _robot;
 
-        public MoveActuatorUseCase(IActuatorRepository actuatorRepository, ISerialCommunication serialCommunication)
+        public MoveActuatorUseCase(Robot robot, ISerialCommunication serialCommunication)
         {
-            _actuatorRepository = actuatorRepository;
             _serialCommunication = serialCommunication;
+            _robot = robot;
         }
 
-        public async Task Execute(int actuatorId, double targetAngle, double speed)
+        public async Task Execute(int actuatorId, double targetAngle, int speed)
         {
-            Actuator? actuator = await _actuatorRepository.GetActuatorById(actuatorId);
+            Actuator? actuator = _robot.GetActuatorById(actuatorId);
 
             if (actuator == null)
             {
                 throw new ArgumentException($"Actuator with ID {actuatorId} not found.");
             }
-            
+            targetAngle = Math.Round(targetAngle);
 
-            double currentAngle = actuator.GetCurrentAngle;
-
-            //Determine the direction to rotate based on the current angle and target angle
-            //we assume that the an angle need to rise to reach the target angle, then the direction is clockwise, otherwise it's counterclockwise
-            RotatingDirection direction = ( currentAngle < targetAngle ) ? RotatingDirection.Clockwise : RotatingDirection.CounterClockwise;
-            await _actuatorRepository.SetRotatingDirection(actuator, direction);
-            await _actuatorRepository.SetActuatorTargetAngle(actuator, targetAngle);
-            await _actuatorRepository.SetActuatorSpeed(actuator, speed);
-            await _actuatorRepository.SetActuatorState(actuator, ActuatorState.Moving);
+            actuator.SetSpeed(speed);
+            actuator.SetTargetAngle(targetAngle);
 
 
-            //build the DTO to send to the serial communication
-            MoveActuatorWireDto CommandWireDto = new MoveActuatorWireDto(
-                id: actuatorId,
-                targetAngle: targetAngle,
-                direction: direction
-            );
-
-            string json = JsonCommandSerializer.ToJson(CommandWireDto);
+            var dto = new MoveActuatorWireDto(
+            )
+            {
+                ObjectIdx = actuatorId,
+                TargetAngle = targetAngle,
+                Speed = speed
+            };
+            string json = JsonCommandSerializer.ToJson(dto);
             await _serialCommunication.SendJsonLineAsync(json);
         }
     }

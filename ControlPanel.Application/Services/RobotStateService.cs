@@ -1,9 +1,11 @@
 ﻿using ControlPanel.Application.DTOs.IncomingMessages;
 using ControlPanel.Application.Interfaces;
 using ControlPanel.Domain.Entities;
+using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ControlPanel.Application.Services
 {
@@ -18,12 +20,10 @@ namespace ControlPanel.Application.Services
         public event EventHandler? RobotConfigured;
         private bool _configRequested = false;
 
-        private static readonly ActuatorWorkingLimits DefaultStepperLimits = new(0, 360);   
-        private static readonly ActuatorWorkingLimits DefaultServoLimits = new(0, 180);   
-
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter<ActuatorStatusWire>() }
         };
 
 
@@ -42,6 +42,13 @@ namespace ControlPanel.Application.Services
             _serialCommunication.MessageReceived -= OnMessageReceived;
         }
 
+        private async Task RequestRobotConfig()
+        {   
+            var request = new { Type = "GET_CONFIG", ManipulatedObject = "SYSTEM"};
+            string json = JsonSerializer.Serialize(request);
+            await _serialCommunication.SendJsonLineAsync(json);
+            
+        }
         private async void OnMessageReceived(object? sender, string json)
         {
             try
@@ -57,6 +64,9 @@ namespace ControlPanel.Application.Services
                     case "HEARTBEAT":
                         await HandleHeartbeat(json);
                         break;
+                    case "INFO":
+                        HandleActuatorInfo(json);
+                        break;
                 }
             }
             catch (JsonException)
@@ -71,21 +81,31 @@ namespace ControlPanel.Application.Services
             if (dto == null)
                 return;
 
-            var steppers = dto.Steppers.Select(s => new Actuator(s.Id, DefaultStepperLimits));
-            var servos = dto.Servos.Select(s => new Actuator(s.Id, DefaultServoLimits));
-            var config = new RobotConfig(steppers, servos, dto.ConfigurablePins.AsReadOnly());
+            var steppers = dto.Steppers.Select(s => new Actuator(s.Id, new ActuatorWorkingLimits(s.RangeStart, s.RangeEnd)));
+            var servos = dto.Servos.Select(s => new Actuator(s.Id, new ActuatorWorkingLimits(s.RangeStart, s.RangeEnd)));
+            var config = new RobotConfig(steppers, servos, dto.UserPins.AsReadOnly());
 
             _configRequested = false;
             Robot.ApplyConfiguration(config);
             RobotConfigured?.Invoke(this, EventArgs.Empty);
         }
 
-        private async Task RequestRobotConfig()
-        {   
-            var request = new { Type = "GET_CONFIG", ManipulatedObject = "SYSTEM"};
-            string json = JsonSerializer.Serialize(request);
-            await _serialCommunication.SendJsonLineAsync(json);
-            
+        private void HandleActuatorInfo(string json)
+        {
+            var dto = JsonSerializer.Deserialize<ActuatorInfoDto>(json, JsonOptions);
+            if(dto == null) 
+                return;
+
+            string manipulatedObject = dto.ManipulatedObject;
+            if(manipulatedObject == "ACTUATOR")
+            {
+                Actuator? actuator = Robot.GetActuatorById(dto.ObjectIdx);
+                if (actuator != null)
+                {
+                    Robot.UpdateActuator(actuator, dto.Values.CurrentAngle, MapStatus(dto.Values.Status));
+                    StateUpdated?.Invoke(this, EventArgs.Empty);
+                }
+            }
         }
 
         private async Task HandleHeartbeat(string json)
@@ -111,11 +131,21 @@ namespace ControlPanel.Application.Services
                 Actuator? actuator = Robot.GetActuatorById(encoder.Id);
                 if(actuator == null)
                     continue;
-                Robot.UpdateActuator(actuator, encoder.Angle);
+                Robot.UpdateActuator(actuator, encoder.JointAngle);
             }
 
             StateUpdated?.Invoke(this, EventArgs.Empty);
         }
+
+        private static ActuatorState MapStatus(ActuatorStatusWire status) => status switch
+        {
+            ActuatorStatusWire.MOVING => ActuatorState.Moving,
+            ActuatorStatusWire.IDLE => ActuatorState.Idle,
+            ActuatorStatusWire.FORBIDDEN => ActuatorState.Forbidden,
+            ActuatorStatusWire.ESTOP => ActuatorState.EStop,
+            ActuatorStatusWire.ACCEPTED => ActuatorState.Idle,
+            _ => ActuatorState.Idle
+        };
 
     }
 }

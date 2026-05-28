@@ -31,15 +31,15 @@ namespace ControlPanel.Domain.Entities
 
         public void SetWorkingLimits(ActuatorWorkingLimits readLimits)
         {
-            if (readLimits.MinAngle > readLimits.MaxAngle)
-            {
-                throw new ArgumentException("Invalid actuator limits. Min angle must be less than or equal to max angle.");
-            }
+            //TODO: review and remove
+            //if (readLimits.MinAngle > readLimits.MaxAngle)
+            //{
+            //    throw new ArgumentException("Invalid actuator limits. Min angle must be less than or equal to max angle.");
+            //}
             _workingLimits = readLimits;
         }
 
-        public ActuatorWorkingLimits GetWorkingLimits() => _workingLimits;
-
+        public ActuatorWorkingLimits GetWorkingLimits => _workingLimits;
 
         public void SetTargetAngle(double target) {
             if (_workingLimits.MaxAngle < target || target < _workingLimits.MinAngle)
@@ -62,21 +62,14 @@ namespace ControlPanel.Domain.Entities
 
         public ActuatorState GetState => _state;
         public void SetState(ActuatorState state) {
+            if(state == _state) 
+                return;
+
             if(state == ActuatorState.Moving) {
                 // Additional logic for when the actuator is ordered to move
                 switch (_state) {
                     case ActuatorState.Error:
                         throw new InvalidOperationException("Cannot move actuator in error state.");
-                    case ActuatorState.Moving:
-                         throw new InvalidOperationException("Actuator is already moving.");
-                }
-
-                if (GetRotatingDirection == RotatingDirection.Clockwise && _targetAngle < _currentAngle)
-                {
-                    throw new InvalidOperationException("Cannot move clockwise to a smaller angle.");
-                }else if (GetRotatingDirection == RotatingDirection.CounterClockwise && _targetAngle > _currentAngle)
-                {
-                    throw new InvalidOperationException("Cannot move counterclockwise to a larger angle.");
                 }
 
                 if (GetSpeed() == 0) {

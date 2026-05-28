@@ -42,7 +42,7 @@ namespace ControlPanel.Infrastructure.Persistence.InMemory
 
         public Task<ActuatorWorkingLimits> GetActuatorWorkingLimits(Actuator actuator)
         {
-            return Task.FromResult(actuator.GetWorkingLimits());
+            return Task.FromResult(actuator.GetWorkingLimits);
         }
 
         public Task SetActuatorCurrentAngle(Actuator actuator, double angle)

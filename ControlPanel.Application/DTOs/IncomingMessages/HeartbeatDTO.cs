@@ -23,6 +23,6 @@ namespace ControlPanel.Application.DTOs.IncomingMessages
     public class EncoderDTO
     {
         public int Id { get; set; }
-        public double Angle { get; set; }
+        public double JointAngle { get; set; }
     }
 }

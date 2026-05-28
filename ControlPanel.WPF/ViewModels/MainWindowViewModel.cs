@@ -11,11 +11,14 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         private readonly IUserInteractionService _userInteractionService;
         private readonly ISerialCommunication _serialCommunication;
         private readonly IRobotStateService _robotStateService;
-        public MainWindowViewModel(IUserInteractionService userInteractionService, ISerialCommunication serialCommunication, IRobotStateService robotStateService) {
+        private readonly IRobotControlService _robotControlService;
+        public MainWindowViewModel(IUserInteractionService userInteractionService, ISerialCommunication serialCommunication, IRobotStateService robotStateService, IRobotControlService robotControlService) {
             _userInteractionService = userInteractionService;
             _serialCommunication = serialCommunication;
             _robotStateService = robotStateService;
-            OpenConfigurationWindowCommand = new RelayCommand(OpenConfigurationWindow);
+            _robotControlService = robotControlService;
+            OpenConfigurationPageCommand = new RelayCommand(OpenConfigurationPage);
+            OpenSimpleControlPageCommand = new RelayCommand(OpenSimpleControlPage);
             _currentView = _userInteractionService.GetView(new HomePageViewModel());
         }
 
@@ -42,11 +45,16 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
         }
 
-        public ICommand OpenConfigurationWindowCommand { get; set; }
+        public ICommand OpenConfigurationPageCommand { get; set; }
 
-        private void OpenConfigurationWindow(object _)
+        private void OpenConfigurationPage(object _)
         {
             CurrentView = _userInteractionService.GetView(new ConfigurationViewModel(_userInteractionService, _serialCommunication, _robotStateService));
+        }
+
+        public ICommand OpenSimpleControlPageCommand { get; set; }
+        public void OpenSimpleControlPage(object _) {
+            CurrentView = _userInteractionService.GetView(new SimpleControlViewModel(_robotStateService, _robotControlService));
         }
 
     }
