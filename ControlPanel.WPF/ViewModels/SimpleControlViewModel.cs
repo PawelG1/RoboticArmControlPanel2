@@ -1,8 +1,10 @@
 ﻿using ControlPanel.Application.Interfaces;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Presentation.WPF.Common;
+using ControlPanel.Presentation.WPF.Views.Pages;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ControlPanel.Presentation.WPF.ViewModels
@@ -14,7 +16,9 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         private readonly IRobotControlService _robotControlService;
 
         public ObservableCollection<ActuatorControlViewModel>? Actuators { get; } = new();
-        public SimpleControlViewModel(IRobotStateService robotStateService, IRobotControlService robotControlService)
+        public RobotVisualiser3DViewModel RobotVisualiser3DVM {get;}
+        public UserControl RobotVisualiserView { get; set; }
+        public SimpleControlViewModel(IRobotStateService robotStateService, IRobotControlService robotControlService, RobotVisualiser3DViewModel robotVisualiser3DVM)
         {
             _robotStateService = robotStateService;
             _robotControlService = robotControlService;
@@ -23,9 +27,15 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             _robotStateService.StateUpdated += OnStateUpdated;
 
             StopAllCommand = new RelayCommand(StopAll);
-            if (_robotStateService.Robot.IsConfigured) {
+            if (_robotStateService.Robot.IsConfigured)
+            {
                 AssignAvailableActuators();
             }
+
+            RobotVisualiser3DVM = robotVisualiser3DVM;
+            RobotVisualiserView = new RobotVisualiser3DView() {
+            DataContext = RobotVisualiser3DVM
+            };
         }
 
         public override void Dispose()

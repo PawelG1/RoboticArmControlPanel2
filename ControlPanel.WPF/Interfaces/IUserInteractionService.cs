@@ -12,5 +12,6 @@ namespace ControlPanel.WPF.Services.Interfaces
         void ShowDialog();
         UserControl GetView(BaseViewModel viewModel);
         void ShowError(string message, string title = "Error");
+        public string? OpenFileDialog(string filter, string title = "Select Files");
     }
 }

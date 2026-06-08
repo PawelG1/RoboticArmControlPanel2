@@ -12,7 +12,14 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         private readonly ISerialCommunication _serialCommunication;
         private readonly IRobotStateService _robotStateService;
         private readonly IRobotControlService _robotControlService;
-        public MainWindowViewModel(IUserInteractionService userInteractionService, ISerialCommunication serialCommunication, IRobotStateService robotStateService, IRobotControlService robotControlService) {
+        private readonly RobotVisualiser3DViewModel robotVisualiser3DViewModel;
+        public MainWindowViewModel(
+            IUserInteractionService userInteractionService, 
+            ISerialCommunication serialCommunication, 
+            IRobotStateService robotStateService, 
+            IRobotControlService robotControlService, 
+            RobotVisualiser3DViewModel robotVisualiser3DViewModel
+            ){
             _userInteractionService = userInteractionService;
             _serialCommunication = serialCommunication;
             _robotStateService = robotStateService;
@@ -20,6 +27,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             OpenConfigurationPageCommand = new RelayCommand(OpenConfigurationPage);
             OpenSimpleControlPageCommand = new RelayCommand(OpenSimpleControlPage);
             _currentView = _userInteractionService.GetView(new HomePageViewModel());
+            this.robotVisualiser3DViewModel = robotVisualiser3DViewModel;
         }
 
         private string _title = "Main Window";
@@ -54,7 +62,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
         public ICommand OpenSimpleControlPageCommand { get; set; }
         public void OpenSimpleControlPage(object _) {
-            CurrentView = _userInteractionService.GetView(new SimpleControlViewModel(_robotStateService, _robotControlService));
+            CurrentView = _userInteractionService.GetView(new SimpleControlViewModel(_robotStateService, _robotControlService, robotVisualiser3DViewModel));
         }
 
     }

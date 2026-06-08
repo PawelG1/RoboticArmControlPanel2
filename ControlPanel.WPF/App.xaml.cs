@@ -17,6 +17,7 @@ namespace ControlPanel.WPF
             var services = new ServiceCollection();
 
             services.AddControlPanelProductionCollection();
+            services.AddTransient<RobotVisualiser3DViewModel>();
             AddPresentationLayerServices(services);
 
             _serviceProvider = services.BuildServiceProvider();

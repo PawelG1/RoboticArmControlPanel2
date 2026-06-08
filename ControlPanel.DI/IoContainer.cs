@@ -5,6 +5,7 @@ using ControlPanel.Domain.Entities;
 using ControlPanel.Infrastructure;
 using ControlPanel.Infrastructure.Hardware;
 using ControlPanel.Infrastructure.Persistence.InMemory;
+using ControlPanel.Infrastructure.UrdfVisualiser;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ControlPanel.DI
@@ -18,7 +19,8 @@ namespace ControlPanel.DI
         {
 
             //infrastructure
-
+            services.AddSingleton<IUrdfLoader, UrdfFileLoader>();
+            services.AddSingleton<IForwardKinematicsService, ForwardKinematicsService>();
             //repositories
 
             //hardware
@@ -36,6 +38,7 @@ namespace ControlPanel.DI
 
             services.AddSingleton<Robot>();
             services.AddSingleton<IRobotStateService, RobotStateService>();
+
             return services;
         }
 

@@ -1,11 +1,8 @@
 ﻿using ControlPanel.Presentation.WPF.Common;
 using ControlPanel.Presentation.WPF.ViewModels;
-using ControlPanel.Presentation.WPF.Views;
 using ControlPanel.Presentation.WPF.Views.Pages;
 using ControlPanel.WPF.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -65,6 +62,17 @@ namespace ControlPanel.WPF.Services
         public void ShowError(string message, string title = "Error")
         {
             throw new NotImplementedException();
+        }
+
+        public string? OpenFileDialog(string filter, string title = "Select Files")
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = title,
+                Filter = filter,
+                CheckFileExists = true,
+            };
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
     }
 }

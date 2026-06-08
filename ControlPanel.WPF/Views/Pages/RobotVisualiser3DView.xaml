@@ -1,0 +1,92 @@
+﻿<UserControl
+    x:Class="ControlPanel.Presentation.WPF.Views.Pages.RobotVisualiser3DView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hx="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
+    xmlns:local="clr-namespace:ControlPanel.Presentation.WPF.Views.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Grid.Row="0"
+            Padding="6,4"
+            Background="#2A2A2A">
+            <StackPanel Orientation="Horizontal">
+                <Button
+                    Padding="8,3"
+                    Command="{Binding LoadUrdfCommand}"
+                    Content="Load URDF files"
+                    FontSize="12" />
+            </StackPanel>
+        </Border>
+
+        <hx:HelixViewport3D
+            Grid.Row="1"
+            Background="#1E1E1E"
+            CameraRotationMode="Trackball"
+            IsHeadLightEnabled="True"
+            ModelUpDirection="0, 1, 0"
+            ZoomAroundMouseDownPoint="True">
+            <hx:HelixViewport3D.Camera>
+                <PerspectiveCamera
+                    FarPlaneDistance="5000"
+                    FieldOfView="45"
+                    LookDirection="0, -200, -150"
+                    NearPlaneDistance="1"
+                    Position="0, 350, 300"
+                    UpDirection="0, 1, 0" />
+            </hx:HelixViewport3D.Camera>
+
+            <hx:GridLinesVisual3D
+                Width="600"
+                Length="600"
+                MajorDistance="100"
+                MinorDistance="50"
+                Normal="0, 1, 0"
+                Thickness="0.5">
+                <hx:GridLinesVisual3D.Fill>
+                    <SolidColorBrush Color="#3A3A5C" />
+                </hx:GridLinesVisual3D.Fill>
+            </hx:GridLinesVisual3D>
+
+            <hx:SphereVisual3D
+                Center="0, 150, -100"
+                Fill="OrangeRed"
+                Radius="4" />
+
+            <hx:CoordinateSystemVisual3D ArrowLengths="10" />
+
+            <ModelVisual3D Content="{Binding RobotScene}" />
+
+            <ModelVisual3D>
+                <ModelVisual3D.Content>
+                    <Model3DGroup>
+                        <AmbientLight Color="#404060" />
+                        <DirectionalLight Direction="-1,-1,-0.5" Color="#CCCCFF" />
+                        <DirectionalLight Direction="1,0.5,0.3" Color="#664444" />
+                    </Model3DGroup>
+                </ModelVisual3D.Content>
+            </ModelVisual3D>
+
+        </hx:HelixViewport3D>
+
+        <Border
+            Grid.Row="2"
+            Padding="6,3"
+            Background="#2A2A3E">
+            <TextBlock
+                FontSize="11"
+                Foreground="#8888AA"
+                Text="{Binding StatusText}" />
+        </Border>
+    </Grid>
+</UserControl>
