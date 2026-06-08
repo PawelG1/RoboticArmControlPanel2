@@ -14,6 +14,7 @@
             <RowDefinition Height="auto" />
             <RowDefinition />
             <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
 
         <Border
@@ -33,7 +34,7 @@
             Grid.Row="1"
             Background="#1E1E1E"
             CameraRotationMode="Trackball"
-            IsHeadLightEnabled="True"
+            IsHeadLightEnabled="False"
             ModelUpDirection="0, 1, 0"
             ZoomAroundMouseDownPoint="True">
             <hx:HelixViewport3D.Camera>
@@ -66,6 +67,7 @@
             <hx:CoordinateSystemVisual3D ArrowLengths="10" />
 
             <ModelVisual3D Content="{Binding RobotScene}" />
+            <ModelVisual3D Content="{Binding GhostScene}" />
 
             <ModelVisual3D>
                 <ModelVisual3D.Content>
@@ -88,5 +90,10 @@
                 Foreground="#8888AA"
                 Text="{Binding StatusText}" />
         </Border>
+
+        <DataGrid
+            Grid.Row="3"
+            AutoGenerateColumns="True"
+            ItemsSource="{Binding PairedActuatorAndJoints}" />
     </Grid>
 </UserControl>
