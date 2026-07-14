@@ -1,0 +1,137 @@
+﻿<UserControl
+    x:Class="ControlPanel.Presentation.WPF.Views.Pages.SequenceManagmentView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:ControlPanel.Presentation.WPF.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:ControlPanel.Presentation.WPF.Views.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Control.Resources>
+        <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
+    </Control.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="9*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Vertical">
+                <GroupBox Height="auto" Header="">
+                    <WrapPanel>
+                        <ToggleButton Margin="4" Content="Start" />
+                        <ToggleButton Margin="4" Content="Stop" />
+                        <ToggleButton Margin="4" Content="Save" />
+                        <ToggleButton Margin="4" Content="Import Program" />
+
+                    </WrapPanel>
+                </GroupBox>
+                <GroupBox Height="auto" Header="Control Robot">
+                    <StackPanel Orientation="Vertical">
+                        <ListView ItemsSource="{Binding Actuators}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="auto" SharedSizeGroup="Col1" />
+                                            <ColumnDefinition Width="auto" SharedSizeGroup="Col2" />
+                                            <ColumnDefinition Width="auto" SharedSizeGroup="Col3" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Grid.Column="0"
+                                            Text="{Binding Name}" />
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            Text="{Binding MinAngle, StringFormat='Min Value:{0}'}" />
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Grid.Column="2"
+                                            Text="{Binding MaxAngle, StringFormat='Max Value:{0}'}" />
+
+                                        <Slider
+                                            Grid.Row="1"
+                                            Grid.ColumnSpan="3"
+                                            Width="200"
+                                            Maximum="{Binding MaxAngle}"
+                                            Minimum="{Binding MinAngle}"
+                                            Value="{Binding TargetAngle}" />
+
+                                        <TextBlock Grid.Row="2" Grid.ColumnSpan="3">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="Current Angle:{0:F2}  Target Angle:{1:F2}">
+                                                    <Binding Path="CurrentAngle" />
+                                                    <Binding Path="TargetAngle" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <Button Command="{Binding RecordStepCommand}" Content="Record Step" />
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="Recorded Steps:">
+                    <DataGrid AutoGenerateColumns="False" ItemsSource="{Binding Steps}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Binding="{Binding StepType, Converter={StaticResource EnumToStringConverter}}"
+                                CanUserSort="False"
+                                Header="Step Type" />
+                            <DataGridTextColumn
+                                Binding="{Binding Timeout}"
+                                CanUserSort="False"
+                                Header="Time" />
+                            <DataGridTemplateColumn Header="Actuators">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <DataGrid AutoGenerateColumns="False" ItemsSource="{Binding RobotStateDTO.Actuators}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Binding="{Binding ObjectIdx}" Header="Id" />
+                                                <DataGridTextColumn Binding="{Binding ManipulatedObject}" Header="Manipulated Object" />
+                                                <DataGridTextColumn Binding="{Binding ActuatorState.TargetAngle}" Header="Target Angle" />
+                                                <DataGridTextColumn Binding="{Binding ActuatorState.CurrentAngle}" Header="Current Angle" />
+                                                <DataGridTextColumn Binding="{Binding ActuatorState.Status}" Header="Status" />
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+
+                </GroupBox>
+            </StackPanel>
+
+            <ContentControl
+                Grid.Column="1"
+                Height="auto"
+                Content="{Binding RobotVisualiserView}" />
+
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" Content="Robot Output:" />
+            <ListView Grid.Row="1" />
+        </Grid>
+    </Grid>
+</UserControl>

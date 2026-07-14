@@ -8,6 +8,8 @@ namespace ControlPanel.Domain.Enums
     {
         Idle,
         Moving,
-        Error
+        Error,
+        Forbidden,
+        EStop,
     }
 }

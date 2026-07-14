@@ -1,9 +1,7 @@
-﻿using System;
-using System.IO;
-using System.IO.Ports;
+﻿using System.IO.Ports;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Text.Json;
+
 
 namespace ControlPanel.Infrastructure.Hardware
 {
@@ -16,22 +14,23 @@ namespace ControlPanel.Infrastructure.Hardware
         LengthPrefixUInt32LittleEndian
     }
 
-    public class SerialPortController
+    public class SerialPortController : IDisposable
     {
-        private readonly string _portName;
-        private readonly Int32 _baudRate;
-        private readonly Parity _parity;
+        private string _portName;
+        private Int32 _baudRate;
+        private Parity _parity;
         private int _dataBits = 0;
-        private readonly StopBits _stopBits;
-        private readonly Handshake _handshake;
-        private readonly int _readTimeout = 500; //default read timeout in milliseconds
-        private readonly int _writeTimeout = 500; //default write timeout in milliseconds
+        private StopBits _stopBits;
+        private Handshake _handshake;
+        private int _readTimeout = 500; //default read timeout in milliseconds
+        private int _writeTimeout = 500; //default write timeout in milliseconds
 
-        private readonly SerialPort _serialPort;
-        
-        private readonly SemaphoreSlim _requestGate = new(1, 1);
-
+        private SerialPort _serialPort;
+        private SemaphoreSlim _requestGate = new(1, 1);
         private const int MaxFramePayloadBytes = 1024 * 1024;
+
+        private SerialMessageFraming _framing = SerialMessageFraming.Newline;
+        private CancellationTokenSource? _readCts;
 
         public SerialPortController(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits, Handshake handshake = Handshake.None)
         {
@@ -43,12 +42,55 @@ namespace ControlPanel.Infrastructure.Hardware
             _handshake = handshake;
 
             _serialPort = new SerialPort();
-            ConfigureSerialPort();
+            //ConfigureSerialPort();
+        }
+        public void Dispose()
+        {
+            _readCts?.Cancel();
+            _readCts?.Dispose();
+            _serialPort.Dispose();
+        }
+
+        public void ConfigureSerialPort(SerialMessageFraming framing = SerialMessageFraming.Newline)
+        {
+            _serialPort.PortName = _portName;
+            _serialPort.BaudRate = _baudRate;
+            _serialPort.Parity = _parity;
+            _serialPort.DataBits = _dataBits;
+            _serialPort.StopBits = _stopBits;
+            _serialPort.Handshake = _handshake;
+            _serialPort.ReadTimeout = _readTimeout;
+            _serialPort.WriteTimeout = _writeTimeout;
+            _framing = framing;
+
+            _serialPort.DtrEnable = true; // Enable DTR to ensure Arduino resets on connect, can be adjusted based on hardware needs
+            _serialPort.RtsEnable = true; // Enable RTS if needed by the hardware, can be adjusted
+        }
+
+        public void SetPortName(string portName)
+        {
+            if (string.IsNullOrEmpty(portName) || !portName.ToLower().Contains("com"))
+            {
+                throw new ArgumentException($"Selected port name is incorrect: {portName}");
+            }
+            if (_serialPort.IsOpen)
+                throw new AccessViolationException($"Selected port is already open {portName}");
+            _portName = portName;
+        }
+
+        public string GetPortName()
+        {
+            return _serialPort.PortName;
+        }
+
+        public bool GetPortStatus()
+        {
+            return _serialPort.IsOpen;
         }
 
         public void SetReadTimeout(int timeout)
         {
-            _serialPort.ReadTimeout = timeout;
+            _readTimeout = timeout;
         }
 
         public void SetWriteTimeout(int timeout)
@@ -63,6 +105,8 @@ namespace ControlPanel.Infrastructure.Hardware
                 if (!_serialPort.IsOpen)
                 {
                     _serialPort.Open();
+                    _readCts = new CancellationTokenSource();
+                    Task.Run(() => ReadLoop(_readCts.Token));
                 }
                 return true;
             }
@@ -77,6 +121,9 @@ namespace ControlPanel.Infrastructure.Hardware
         {
             try
             {
+                _readCts?.Cancel();
+                _readCts?.Dispose();
+                _readCts = null;
                 if (_serialPort.IsOpen)
                 {
                     _serialPort.Close();
@@ -89,6 +136,11 @@ namespace ControlPanel.Infrastructure.Hardware
                 return false;
 
             }
+        }
+
+        public static string[] GetSerialPorts()
+        {
+            return SerialPort.GetPortNames();
         }
 
         public async Task<bool> WriteToSerialPort(string data)
@@ -115,24 +167,42 @@ namespace ControlPanel.Infrastructure.Hardware
 
         public string? ReadFromSerialPort()
         {
-            try
+ 
+            if (_serialPort.IsOpen)
             {
-                if (_serialPort.IsOpen)
-                {
-                    return _serialPort.ReadLine();
-                }
-                else
-                {
-                    Console.WriteLine("Serial port is not open.");
-                    return null;
-                }
+                return _serialPort.ReadLine();
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error reading from serial port: {ex.Message}");
-                return null;
+                throw new IOException("Serial port is not open.");
+            }
+
+
+        }
+
+        private async Task ReadLoop(CancellationToken ct)
+        {
+            while(!ct.IsCancellationRequested && _serialPort.IsOpen)
+            {
+                try
+                {
+                    string? message = _framing switch
+                    {
+                        SerialMessageFraming.Newline => _serialPort.ReadLine(),
+                        SerialMessageFraming.LengthPrefixUInt32LittleEndian => ReadLengthPrefixedUtf8(),
+                        _ => null
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(message))
+                        OnMessageReceived?.Invoke(this, message);
+                }
+                catch (TimeoutException) { }
+                catch (OperationCanceledException) { break; }
+                catch (IOException) { break; }
             }
         }
+
+        public EventHandler<string>? OnMessageReceived { get; set; }
 
         /// <summary>
         /// Wysyła ramkę i czyta odpowiedź tą samą konwencją na puli wątków, więc UI może robić <c>await</c> bez blokowania.
@@ -268,16 +338,5 @@ namespace ControlPanel.Infrastructure.Hardware
             }
         }
 
-        private void ConfigureSerialPort()
-        {
-            _serialPort.PortName = _portName;
-            _serialPort.BaudRate = _baudRate;
-            _serialPort.Parity = _parity;
-            _serialPort.DataBits = _dataBits;
-            _serialPort.StopBits = _stopBits;
-            _serialPort.Handshake = _handshake;
-            _serialPort.ReadTimeout = _readTimeout;
-            _serialPort.WriteTimeout = _writeTimeout;
-        }
     }
 }

@@ -1,12 +1,22 @@
-﻿using ControlPanel.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ControlPanel.Application.DTOs.SerialCommands
+﻿namespace ControlPanel.Application.DTOs.SerialCommands
 {
-    public record RunActuatorWireDto(int id, int speed, RotatingDirection direction);
-    public record MoveActuatorWireDto(int id, double targetAngle, RotatingDirection direction);
-    public record StopActuatorWireDto(int id);
+
+    public record MoveActuatorWireDTO() { 
+        public string Type => "MOVE";
+        public string ManipulatedObject => "ACTUATOR"; 
+        public int ObjectIdx { get; set; }
+        public double TargetAngle { get; set; }
+        public int Speed { get; set; }
+    }
+    public record StopActuatorWireDTO() {
+        public string Type => "STOP";
+        public string ManipulatedObject => "ACTUATOR";
+        public int ObjectIdx { get; set; }
+    }
+    public record StopAllWireDTO()
+    {
+        public string Type => "STOP";
+        public string ManipulatedObject => "ALL";
+    }
 
 }

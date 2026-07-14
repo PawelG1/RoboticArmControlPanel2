@@ -1,4 +1,6 @@
-﻿using ControlPanel.Application.Interfaces;
+﻿using ControlPanel.Application.DTOs.SerialCommands;
+using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Serialization;
 using ControlPanel.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -8,23 +10,27 @@ namespace ControlPanel.Application.UseCases
 {
     public class StopActuatorUseCase
     {
-        IActuatorRepository _actuatorRepository;
-        public StopActuatorUseCase(IActuatorRepository actuatorRepository)
+        private readonly ISerialCommunication _serialCommunication;
+        private readonly Robot _robot;
+        public StopActuatorUseCase(Robot robot, ISerialCommunication serialCommunication)
         {
-            _actuatorRepository = actuatorRepository;
+           _robot = robot;
+           _serialCommunication = serialCommunication;
         }
 
         public async Task Execute(int actuatorId)
         {
-            Actuator? actuator = await _actuatorRepository.GetActuatorById(actuatorId);
+            Actuator? actuator = _robot.GetActuatorById(actuatorId);
             if (actuator is null)
                 throw new ArgumentException($"Actuator with ID {actuatorId} not found.");
 
-            await _actuatorRepository.SetActuatorSpeed(actuator, 0);
-            double currentAngle = await _actuatorRepository.GetActuatorCurrentAngle(actuator);
-            await _actuatorRepository.SetActuatorTargetAngle(actuator, currentAngle);
-            await _actuatorRepository.SetRotatingDirection(actuator, Domain.Enums.RotatingDirection.Clockwise);
-            await _actuatorRepository.SetActuatorState(actuator, Domain.Enums.ActuatorState.Idle);
+            var dto = new StopActuatorWireDTO()
+            {
+                ObjectIdx = actuatorId
+            };
+            string json = JsonCommandSerializer.ToJson(dto);
+            await _serialCommunication.SendJsonLineAsync(json);
+            actuator.SetState(Domain.Enums.ActuatorState.Idle);
         }
     }
 }

@@ -25,6 +25,7 @@ namespace ControlPanel.Tests.UnitTests
         public void TearDown()
         {
             port.CloseSerialPort();
+            port.Dispose();
         }
 
         [Test]

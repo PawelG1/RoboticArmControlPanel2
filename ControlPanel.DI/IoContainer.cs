@@ -1,8 +1,11 @@
 ﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Services;
 using ControlPanel.Application.UseCases;
+using ControlPanel.Domain.Entities;
 using ControlPanel.Infrastructure;
 using ControlPanel.Infrastructure.Hardware;
 using ControlPanel.Infrastructure.Persistence.InMemory;
+using ControlPanel.Infrastructure.UrdfVisualiser;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ControlPanel.DI
@@ -12,19 +15,19 @@ namespace ControlPanel.DI
         /// <summary> Dependency Injection Container </summary>
 
         public static IServiceCollection AddControlPanelProductionCollection(
-               this IServiceCollection services
-            ) {
+               this IServiceCollection services)
+        {
 
             //infrastructure
-
+            services.AddSingleton<IUrdfLoader, UrdfFileLoader>();
+            services.AddSingleton<IForwardKinematicsService, ForwardKinematicsService>();
             //repositories
-            services.AddSingleton<IActuatorRepository, ActuatorInMemoryRepository>();
-            
+
             //hardware
             services.AddSingleton<ISerialCommunication, SerialCommunicationService>();
             services.AddSingleton(new SerialPortController(
-                portName: "COM3",
-                baudRate: 9600,
+                portName: "",
+                baudRate: 115200,
                 parity: System.IO.Ports.Parity.None,
                 dataBits: 8,
                 stopBits: System.IO.Ports.StopBits.One
@@ -32,6 +35,10 @@ namespace ControlPanel.DI
 
             //application
             RegisterApplicationServices(services);
+
+            services.AddSingleton<Robot>();
+            services.AddSingleton<IRobotStateService, RobotStateService>();
+            services.AddSingleton<IRobotSequenceService, RobotSequenceService>();
 
             return services;
         }
@@ -42,8 +49,11 @@ namespace ControlPanel.DI
         private static void RegisterApplicationServices(IServiceCollection services)
         {
             // Use Cases
-            services.AddScoped<MoveActuatorUseCase>();
-            services.AddScoped<StopActuatorUseCase>();
+            services.AddTransient<IRobotControlService, RobotControlService>();
+            services.AddTransient<MoveActuatorUseCase>();
+            services.AddTransient<StopActuatorUseCase>();
+            services.AddTransient<StopAllActuatorsUseCase>();
         }
+
     }
 }
