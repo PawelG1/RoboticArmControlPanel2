@@ -37,7 +37,7 @@ namespace ControlPanel.Domain.Entities
             return _actuators.Find(actuator => actuator.GetId == id);
         }
 
-        public IEnumerable<Actuator> GetAllActuators() 
+        public IEnumerable<Actuator> GetAllActuators()
         {
             return _actuators; 
         }

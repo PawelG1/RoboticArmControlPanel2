@@ -9,16 +9,16 @@ using System.Windows.Input;
 
 namespace ControlPanel.Presentation.WPF.ViewModels
 {
-    public class SimpleControlViewModel : BaseViewModel
+    public class SimpleRobotControlViewModel : BaseViewModel
     {
 
-        private readonly IRobotStateService _robotStateService;
-        private readonly IRobotControlService _robotControlService;
+        protected readonly IRobotStateService _robotStateService;
+        protected readonly IRobotControlService _robotControlService;
 
         public ObservableCollection<ActuatorControlViewModel>? Actuators { get; } = new();
         public RobotVisualiser3DViewModel RobotVisualiser3DVM {get;}
         public UserControl RobotVisualiserView { get; set; }
-        public SimpleControlViewModel(IRobotStateService robotStateService, IRobotControlService robotControlService, RobotVisualiser3DViewModel robotVisualiser3DVM)
+        public SimpleRobotControlViewModel(IRobotStateService robotStateService, IRobotControlService robotControlService, RobotVisualiser3DViewModel robotVisualiser3DVM)
         {
             _robotStateService = robotStateService;
             _robotControlService = robotControlService;
@@ -57,7 +57,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             _robotControlService.StopAllActuators();
         }
 
-        private void OnRobotConfigured(object? sender, EventArgs e)
+        protected void OnRobotConfigured(object? sender, EventArgs e)
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
@@ -65,7 +65,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             });
         }
 
-        private void AssignAvailableActuators()
+        protected void AssignAvailableActuators()
         {
             Actuators?.Clear();
             var actuators = _robotStateService.Robot.GetAllActuators();
@@ -89,9 +89,9 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
         }
 
-        private void OnStateUpdated(object? sender, EventArgs e)
+        protected void OnStateUpdated(object? sender, EventArgs e)
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current.Dispatcher.Invoke((Delegate)(() =>
             {
                 if(Actuators != null)
                 {
@@ -105,7 +105,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
                         }
                     }
                 }
-            });
+            }));
         }
     }
 }

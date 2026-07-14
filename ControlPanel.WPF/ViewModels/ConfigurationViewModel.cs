@@ -136,8 +136,9 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         private void SetUpDefaultConnection()
         {
             GetAvailableComPorts();
-            SelectedComPortName = AvailableComPorts.FirstOrDefault() ?? "";
-
+            string configuredPortName = _serialCommunication.GetSelectedPortName();
+            
+            SelectedComPortName = string.IsNullOrWhiteSpace(configuredPortName) ? AvailableComPorts.First() : configuredPortName;
         }
 
         private void OnMessageReceived(object? sender, string message)

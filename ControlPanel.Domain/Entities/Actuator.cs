@@ -31,11 +31,6 @@ namespace ControlPanel.Domain.Entities
 
         public void SetWorkingLimits(ActuatorWorkingLimits readLimits)
         {
-            //TODO: review and remove
-            //if (readLimits.MinAngle > readLimits.MaxAngle)
-            //{
-            //    throw new ArgumentException("Invalid actuator limits. Min angle must be less than or equal to max angle.");
-            //}
             _workingLimits = readLimits;
         }
 

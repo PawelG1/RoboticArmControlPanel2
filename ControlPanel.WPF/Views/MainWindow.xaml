@@ -14,14 +14,25 @@
             <ColumnDefinition Width="auto" />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
-        <StackPanel Margin="0,10" Orientation="Vertical">
+
+        <StackPanel Margin="8,10" Orientation="Vertical">
             <TextBlock
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Text="{Binding Title}" />
             <TextBlock HorizontalAlignment="Center" Text="MENU" />
-            <Button Command="{Binding OpenConfigurationPageCommand}" Content="Open Configuration" />
-            <Button Command="{Binding OpenSimpleControlPageCommand}" Content="Open Simple Control" />
+            <Button
+                Margin="0,2"
+                Command="{Binding OpenConfigurationPageCommand}"
+                Content="Open Configuration" />
+            <Button
+                Margin="0,2"
+                Command="{Binding OpenSimpleControlPageCommand}"
+                Content="Open Simple Control" />
+            <Button
+                Margin="0,2"
+                Command="{Binding OpenSequenceManagmentPageCommand}"
+                Content="Open Sequence Managment" />
 
         </StackPanel>
         <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />

@@ -12,6 +12,7 @@ public interface ISerialCommunication
     Task<bool> SendJsonLineAsync(string jsonLine);
     void ConfigureConnection(string portName);
     string[] GetAvailableSerialPorts();
+    string GetSelectedPortName();
     void Connect();
     void Disconnect();
     bool GetConnectionStatus();

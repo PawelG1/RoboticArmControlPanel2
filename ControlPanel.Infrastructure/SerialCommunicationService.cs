@@ -18,6 +18,7 @@ public sealed class SerialCommunicationService : ISerialCommunication
     public void ConfigureConnection(string portName)
     {
         _serialPortController.SetPortName(portName);
+        _serialPortController.ConfigureSerialPort();
     }
 
     public void Connect()
@@ -48,6 +49,11 @@ public sealed class SerialCommunicationService : ISerialCommunication
     public Task<string?> SendJsonRequestAsync(string jsonLine)
     {
         return _serialPortController.SendRequestAsync(jsonLine);
+    }
+
+    public string GetSelectedPortName()
+    {
+        return _serialPortController.GetPortName();
     }
 
     private void OnMessageReceivedFromPort(object? sender, string message)

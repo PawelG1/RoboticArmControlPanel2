@@ -1,5 +1,7 @@
-﻿using ControlPanel.Application.DTOs.IncomingMessages;
+﻿using ControlPanel.Application.DTOs;
+using ControlPanel.Application.DTOs.IncomingMessages;
 using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Mapping;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
@@ -40,6 +42,32 @@ namespace ControlPanel.Application.Services
         public void StopListening()
         {
             _serialCommunication.MessageReceived -= OnMessageReceived;
+        }
+
+        public RobotStateDTO GetRobotState()
+        {
+            IEnumerable<Actuator> actuators = Robot.GetAllActuators();
+            HashSet<ActuatorDto> actuatorsDTOs = new(); 
+            foreach (Actuator actuator in actuators)
+            {
+                actuatorsDTOs.Add(new ActuatorDto
+                {
+                    ObjectIdx = actuator.GetId,
+                    ActuatorState = new ActuatorStateDto()
+                    {
+                        CurrentAngle = actuator.GetCurrentAngle,
+                        TargetAngle = actuator.GetTargetAngle(),
+                        Status = actuator.GetState.ToWire()
+                    }
+                });
+            }
+
+            return new RobotStateDTO()
+            {
+                Actuators = actuatorsDTOs.ToList(),
+                IsConfigured = Robot.IsConfigured
+                //in future add maybe more props
+            };
         }
 
         private async Task RequestRobotConfig()
@@ -92,7 +120,7 @@ namespace ControlPanel.Application.Services
 
         private void HandleActuatorInfo(string json)
         {
-            var dto = JsonSerializer.Deserialize<ActuatorInfoDto>(json, JsonOptions);
+            var dto = JsonSerializer.Deserialize<ActuatorDto>(json, JsonOptions);
             if(dto == null) 
                 return;
 
@@ -102,7 +130,7 @@ namespace ControlPanel.Application.Services
                 Actuator? actuator = Robot.GetActuatorById(dto.ObjectIdx);
                 if (actuator != null)
                 {
-                    Robot.UpdateActuator(actuator, dto.Values.CurrentAngle, MapStatus(dto.Values.Status));
+                    Robot.UpdateActuator(actuator, dto.ActuatorState.CurrentAngle, dto.ActuatorState.Status.ToDomain());
                     StateUpdated?.Invoke(this, EventArgs.Empty);
                 }
             }
@@ -136,16 +164,6 @@ namespace ControlPanel.Application.Services
 
             StateUpdated?.Invoke(this, EventArgs.Empty);
         }
-
-        private static ActuatorState MapStatus(ActuatorStatusWire status) => status switch
-        {
-            ActuatorStatusWire.MOVING => ActuatorState.Moving,
-            ActuatorStatusWire.IDLE => ActuatorState.Idle,
-            ActuatorStatusWire.FORBIDDEN => ActuatorState.Forbidden,
-            ActuatorStatusWire.ESTOP => ActuatorState.EStop,
-            ActuatorStatusWire.ACCEPTED => ActuatorState.Idle,
-            _ => ActuatorState.Idle
-        };
 
     }
 }

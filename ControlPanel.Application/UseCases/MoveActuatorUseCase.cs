@@ -31,7 +31,7 @@ namespace ControlPanel.Application.UseCases
             actuator.SetTargetAngle(targetAngle);
 
 
-            var dto = new MoveActuatorWireDto(
+            var dto = new MoveActuatorWireDTO(
             )
             {
                 ObjectIdx = actuatorId,

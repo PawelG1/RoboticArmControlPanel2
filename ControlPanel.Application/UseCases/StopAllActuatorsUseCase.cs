@@ -18,7 +18,7 @@ namespace ControlPanel.Application.UseCases
 
         public async Task Execute()
         {
-            var dto = new StopAllWireDto();
+            var dto = new StopAllWireDTO();
             string json = JsonCommandSerializer.ToJson(dto);
             await _serialCommunication.SendJsonLineAsync(json);
 

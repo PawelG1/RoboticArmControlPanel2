@@ -12,20 +12,24 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         private readonly ISerialCommunication _serialCommunication;
         private readonly IRobotStateService _robotStateService;
         private readonly IRobotControlService _robotControlService;
+        private readonly IRobotSequenceService _robotSequenceService;
         private readonly RobotVisualiser3DViewModel robotVisualiser3DViewModel;
         public MainWindowViewModel(
             IUserInteractionService userInteractionService, 
             ISerialCommunication serialCommunication, 
             IRobotStateService robotStateService, 
-            IRobotControlService robotControlService, 
+            IRobotControlService robotControlService,
+            IRobotSequenceService robotSequenceService,
             RobotVisualiser3DViewModel robotVisualiser3DViewModel
             ){
             _userInteractionService = userInteractionService;
             _serialCommunication = serialCommunication;
             _robotStateService = robotStateService;
             _robotControlService = robotControlService;
+            _robotSequenceService = robotSequenceService;
             OpenConfigurationPageCommand = new RelayCommand(OpenConfigurationPage);
             OpenSimpleControlPageCommand = new RelayCommand(OpenSimpleControlPage);
+            OpenSequenceManagmentPageCommand = new RelayCommand(OpenSequenceManagmentPage);
             _currentView = _userInteractionService.GetView(new HomePageViewModel());
             this.robotVisualiser3DViewModel = robotVisualiser3DViewModel;
         }
@@ -62,7 +66,13 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
         public ICommand OpenSimpleControlPageCommand { get; set; }
         public void OpenSimpleControlPage(object _) {
-            CurrentView = _userInteractionService.GetView(new SimpleControlViewModel(_robotStateService, _robotControlService, robotVisualiser3DViewModel));
+            CurrentView = _userInteractionService.GetView(new SimpleRobotControlViewModel(_robotStateService, _robotControlService, robotVisualiser3DViewModel));
+        }
+
+        public ICommand OpenSequenceManagmentPageCommand { get; set; }
+        public void OpenSequenceManagmentPage(object _)
+        {
+            CurrentView = _userInteractionService.GetView(new SequenceManagmentViewModel(_robotSequenceService ,_robotStateService, _robotControlService, robotVisualiser3DViewModel));
         }
 
     }

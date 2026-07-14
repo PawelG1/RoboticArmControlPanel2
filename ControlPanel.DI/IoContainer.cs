@@ -26,7 +26,7 @@ namespace ControlPanel.DI
             //hardware
             services.AddSingleton<ISerialCommunication, SerialCommunicationService>();
             services.AddSingleton(new SerialPortController(
-                portName: "COM3",
+                portName: "",
                 baudRate: 115200,
                 parity: System.IO.Ports.Parity.None,
                 dataBits: 8,
@@ -38,6 +38,7 @@ namespace ControlPanel.DI
 
             services.AddSingleton<Robot>();
             services.AddSingleton<IRobotStateService, RobotStateService>();
+            services.AddSingleton<IRobotSequenceService, RobotSequenceService>();
 
             return services;
         }

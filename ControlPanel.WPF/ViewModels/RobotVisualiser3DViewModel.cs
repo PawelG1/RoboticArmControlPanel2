@@ -52,9 +52,6 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             _robotStateService.RobotConfigured -= OnRobotConfiguredUpdated;
             base.Dispose();
         }
-        public ObservableCollection<LinkDebugInfo> LinkInfos { get; } = new();
-
-        public record LinkDebugInfo(string Name, string WorldPosition);//TODO: maybe remove
         
         public ICommand LoadUrdfCommand {  get; }
 

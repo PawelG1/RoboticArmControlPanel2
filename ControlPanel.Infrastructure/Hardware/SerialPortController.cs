@@ -16,17 +16,17 @@ namespace ControlPanel.Infrastructure.Hardware
 
     public class SerialPortController : IDisposable
     {
-        private readonly string _portName;
-        private readonly Int32 _baudRate;
-        private readonly Parity _parity;
+        private string _portName;
+        private Int32 _baudRate;
+        private Parity _parity;
         private int _dataBits = 0;
-        private readonly StopBits _stopBits;
-        private readonly Handshake _handshake;
-        private readonly int _readTimeout = 500; //default read timeout in milliseconds
-        private readonly int _writeTimeout = 500; //default write timeout in milliseconds
+        private StopBits _stopBits;
+        private Handshake _handshake;
+        private int _readTimeout = 500; //default read timeout in milliseconds
+        private int _writeTimeout = 500; //default write timeout in milliseconds
 
-        private readonly SerialPort _serialPort;
-        private readonly SemaphoreSlim _requestGate = new(1, 1);
+        private SerialPort _serialPort;
+        private SemaphoreSlim _requestGate = new(1, 1);
         private const int MaxFramePayloadBytes = 1024 * 1024;
 
         private SerialMessageFraming _framing = SerialMessageFraming.Newline;
@@ -42,13 +42,29 @@ namespace ControlPanel.Infrastructure.Hardware
             _handshake = handshake;
 
             _serialPort = new SerialPort();
-            ConfigureSerialPort();
+            //ConfigureSerialPort();
         }
         public void Dispose()
         {
             _readCts?.Cancel();
             _readCts?.Dispose();
             _serialPort.Dispose();
+        }
+
+        public void ConfigureSerialPort(SerialMessageFraming framing = SerialMessageFraming.Newline)
+        {
+            _serialPort.PortName = _portName;
+            _serialPort.BaudRate = _baudRate;
+            _serialPort.Parity = _parity;
+            _serialPort.DataBits = _dataBits;
+            _serialPort.StopBits = _stopBits;
+            _serialPort.Handshake = _handshake;
+            _serialPort.ReadTimeout = _readTimeout;
+            _serialPort.WriteTimeout = _writeTimeout;
+            _framing = framing;
+
+            _serialPort.DtrEnable = true; // Enable DTR to ensure Arduino resets on connect, can be adjusted based on hardware needs
+            _serialPort.RtsEnable = true; // Enable RTS if needed by the hardware, can be adjusted
         }
 
         public void SetPortName(string portName)
@@ -59,7 +75,12 @@ namespace ControlPanel.Infrastructure.Hardware
             }
             if (_serialPort.IsOpen)
                 throw new AccessViolationException($"Selected port is already open {portName}");
-            _serialPort.PortName = portName;
+            _portName = portName;
+        }
+
+        public string GetPortName()
+        {
+            return _serialPort.PortName;
         }
 
         public bool GetPortStatus()
@@ -69,7 +90,7 @@ namespace ControlPanel.Infrastructure.Hardware
 
         public void SetReadTimeout(int timeout)
         {
-            _serialPort.ReadTimeout = timeout;
+            _readTimeout = timeout;
         }
 
         public void SetWriteTimeout(int timeout)
@@ -315,22 +336,6 @@ namespace ControlPanel.Infrastructure.Hardware
                     throw new EndOfStreamException("Serial read returned 0 bytes before completing frame.");
                 read += n;
             }
-        }
-
-        private void ConfigureSerialPort(SerialMessageFraming framing = SerialMessageFraming.Newline)
-        {
-            _serialPort.PortName = _portName;
-            _serialPort.BaudRate = _baudRate;
-            _serialPort.Parity = _parity;
-            _serialPort.DataBits = _dataBits;
-            _serialPort.StopBits = _stopBits;
-            _serialPort.Handshake = _handshake;
-            _serialPort.ReadTimeout = _readTimeout;
-            _serialPort.WriteTimeout = _writeTimeout;
-            _framing = framing;
-
-            _serialPort.DtrEnable = true; // Enable DTR to ensure Arduino resets on connect, can be adjusted based on hardware needs
-            _serialPort.RtsEnable = true; // Enable RTS if needed by the hardware, can be adjusted
         }
 
     }

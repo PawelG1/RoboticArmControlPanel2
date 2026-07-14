@@ -49,7 +49,12 @@ namespace ControlPanel.WPF.Services
                     {
                         DataContext = configurationViewModel
                     };
-                case SimpleControlViewModel simpleControlViewModel:
+                case SequenceManagmentViewModel sequenceManagmentViewModel:
+                    return new SequenceManagmentView()
+                    {
+                        DataContext = sequenceManagmentViewModel
+                    };
+                case SimpleRobotControlViewModel simpleControlViewModel:
                     return new SimpleControlView()
                     {
                         DataContext = simpleControlViewModel

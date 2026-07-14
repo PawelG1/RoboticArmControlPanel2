@@ -4,14 +4,13 @@ using System.Text;
 
 namespace ControlPanel.Application.DTOs.IncomingMessages
 {
-    public class ActuatorInfoDto
+    public class ActuatorDto
     {
-        public string Type { get; set; } = "";
         public string ManipulatedObject { get; set; } = "";
         public int ObjectIdx { get; set; }
-        public ActuatorInfoValuesDto Values { get; set; } = new();
+        public ActuatorStateDto ActuatorState { get; set; } = new();
     }
-    public class ActuatorInfoValuesDto
+    public class ActuatorStateDto
     {
         public double CurrentAngle { get; set; }
         public double TargetAngle { get; set; }
@@ -23,7 +22,6 @@ namespace ControlPanel.Application.DTOs.IncomingMessages
         IDLE,
         FORBIDDEN,
         ESTOP,
-        ACCEPTED
     }
 }
 

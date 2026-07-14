@@ -60,6 +60,8 @@
             <Separator Margin="0,10" />
             <StackPanel Margin="4" Orientation="Vertical">
                 <TextBlock Margin="4" Text="Status" />
+                <Label Content="Connected" Visibility="Collapsed"/>
+                
                 <TextBlock
                     Margin="4"
                     Foreground="{Binding ConnectionStatusColor}"
@@ -71,7 +73,8 @@
                 <Separator Margin="0,10" />
                 <TextBlock Margin="4" Text="Connection Log" />
                 <TextBox
-                    Width="720"
+                    Width="auto"
+                    MinWidth="720"
                     MaxHeight="420"
                     Margin="4"
                     HorizontalScrollBarVisibility="Auto"

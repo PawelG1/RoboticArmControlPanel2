@@ -24,7 +24,7 @@ namespace ControlPanel.Application.UseCases
             if (actuator is null)
                 throw new ArgumentException($"Actuator with ID {actuatorId} not found.");
 
-            var dto = new StopActuatorWireDto()
+            var dto = new StopActuatorWireDTO()
             {
                 ObjectIdx = actuatorId
             };
