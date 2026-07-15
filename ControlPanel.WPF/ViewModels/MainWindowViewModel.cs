@@ -9,14 +9,14 @@ namespace ControlPanel.Presentation.WPF.ViewModels
     public class MainWindowViewModel : BaseViewModel
     {
         private readonly IUserInteractionService _userInteractionService;
-        private readonly ISerialCommunication _serialCommunication;
+        private readonly ISerialCommunicationService _serialCommunication;
         private readonly IRobotStateService _robotStateService;
         private readonly IRobotControlService _robotControlService;
         private readonly IRobotSequenceService _robotSequenceService;
         private readonly RobotVisualiser3DViewModel robotVisualiser3DViewModel;
         public MainWindowViewModel(
             IUserInteractionService userInteractionService, 
-            ISerialCommunication serialCommunication, 
+            ISerialCommunicationService serialCommunication, 
             IRobotStateService robotStateService, 
             IRobotControlService robotControlService,
             IRobotSequenceService robotSequenceService,

@@ -12,7 +12,7 @@ namespace ControlPanel.Application.Services
         Wait,
     }
 
-    public readonly struct Step { //trzeba chyba przeniesc w odpowiednie miejsca Step i StepType
+    public readonly struct Step { //TODO: trzeba chyba przeniesc w odpowiednie miejsca Step i StepType, czy do domain?
         public StepType StepType { get; }
         public RobotStateDTO? RobotStateDTO {  get; }
         public TimeSpan? Delay { get; }
@@ -34,8 +34,11 @@ namespace ControlPanel.Application.Services
 
     public class RobotSequenceService : IRobotSequenceService
     {
+        private readonly ISequenceRepository _sequenceRepository;
         private List<Step> _steps = new();
-        public RobotSequenceService() { }
+        public RobotSequenceService(ISequenceRepository sequenceRepository) {
+            _sequenceRepository = sequenceRepository;
+        }
 
         public Step RecordStep(StepType stepType, RobotStateDTO robotState)
         {
@@ -76,9 +79,9 @@ namespace ControlPanel.Application.Services
             throw new NotImplementedException();
         }
 
-        public void SaveSequence()
+        public void ExportSequence(string filePath)
         {
-            throw new NotImplementedException();
+            _sequenceRepository.ExportSequenceFile(_steps, filePath);
         }
 
         public void ImportSequence()

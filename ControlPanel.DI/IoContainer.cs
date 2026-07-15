@@ -4,6 +4,7 @@ using ControlPanel.Application.UseCases;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Infrastructure;
 using ControlPanel.Infrastructure.Hardware;
+using ControlPanel.Infrastructure.Persistence;
 using ControlPanel.Infrastructure.Persistence.InMemory;
 using ControlPanel.Infrastructure.UrdfVisualiser;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,9 +23,9 @@ namespace ControlPanel.DI
             services.AddSingleton<IUrdfLoader, UrdfFileLoader>();
             services.AddSingleton<IForwardKinematicsService, ForwardKinematicsService>();
             //repositories
-
+            services.AddSingleton<ISequenceRepository, SequenceFileRepository>();
             //hardware
-            services.AddSingleton<ISerialCommunication, SerialCommunicationService>();
+            services.AddSingleton<ISerialCommunicationService, SerialCommunicationService>();
             services.AddSingleton(new SerialPortController(
                 portName: "",
                 baudRate: 115200,

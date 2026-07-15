@@ -1,5 +1,4 @@
 ﻿using ControlPanel.Application.DTOs;
-using ControlPanel.Application.DTOs.IncomingMessages;
 using ControlPanel.Application.Interfaces;
 using ControlPanel.Application.Services;
 using ControlPanel.Presentation.WPF.Common;
@@ -20,12 +19,13 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             _robotSequenceService = robotSequenceService;
 
             RecordStepCommand = new RelayCommand(RecordStep);
+            ExportFileCommand = new RelayCommand(ExportFile);
 
-            LoadAllRecordedSteps();
+            LoadAllRecordedSteps();//TODO: initialize Steps
         }
 
-        //private List<Step> steps = new();//Czy nie wartaloby uzyc Observable Collection?
-        public ObservableCollection<Step> Steps;// = new();
+        //TODO: private List<Step> steps = new();//Czy nie wartaloby uzyc Observable Collection?
+        public ObservableCollection<Step> Steps { get; } = new();
 
         public ICommand RecordStepCommand { get; }
         public void RecordStep(object _)
@@ -35,6 +35,21 @@ namespace ControlPanel.Presentation.WPF.ViewModels
                 return;
             Step recordedStep = _robotSequenceService.RecordStep(StepType.Move, robotStateDTO);
             Steps.Add(recordedStep);
+        }
+
+        public ICommand ExportFileCommand { get; }
+        public void ExportFile(object _)
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog();
+            dialog.FileName = $"Sequence_{DateTime.Now.ToShortDateString()}";
+            dialog.DefaultExt = ".json";
+            dialog.Filter = "Json files (*.json)|*.json"; //TODO:maybe store these in SequenceService
+        
+            bool? result = dialog.ShowDialog();
+            if(result == true && dialog.CheckPathExists)
+            {
+                _robotSequenceService.ExportSequence(dialog.FileName);
+            }
         }
 
         private void LoadAllRecordedSteps()

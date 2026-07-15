@@ -13,7 +13,7 @@ namespace ControlPanel.Application.Services
 {
     public class RobotStateService : IRobotStateService
     {
-        private readonly ISerialCommunication _serialCommunication;
+        private readonly ISerialCommunicationService _serialCommunication;
 
      
         public Robot Robot { get; }
@@ -29,7 +29,7 @@ namespace ControlPanel.Application.Services
         };
 
 
-        public RobotStateService(ISerialCommunication serialCommunication, Robot robot)
+        public RobotStateService(ISerialCommunicationService serialCommunication, Robot robot)
         {
             _serialCommunication = serialCommunication;
             Robot = robot;
@@ -66,7 +66,7 @@ namespace ControlPanel.Application.Services
             {
                 Actuators = actuatorsDTOs.ToList(),
                 IsConfigured = Robot.IsConfigured
-                //in future add maybe more props
+                //TODO:in future add maybe more props
             };
         }
 

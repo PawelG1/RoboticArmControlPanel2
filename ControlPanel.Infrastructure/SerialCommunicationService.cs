@@ -3,7 +3,7 @@ using ControlPanel.Infrastructure.Hardware;
 
 namespace ControlPanel.Infrastructure;
 
-public sealed class SerialCommunicationService : ISerialCommunication
+public sealed class SerialCommunicationService : ISerialCommunicationService
 {
     private readonly SerialPortController _serialPortController;
     public event EventHandler<string>? MessageReceived;

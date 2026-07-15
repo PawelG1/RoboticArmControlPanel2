@@ -1,6 +1,6 @@
 ﻿namespace ControlPanel.Application.Interfaces;
 
-public interface ISerialCommunication
+public interface ISerialCommunicationService
 {
     event EventHandler<string> MessageReceived;
 

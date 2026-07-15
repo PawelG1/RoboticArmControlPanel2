@@ -16,7 +16,7 @@ namespace ControlPanel.Application.Interfaces
 
         public Task ExecuteSequence();
         public void ClearSequence();
-        public void SaveSequence();
+        public void ExportSequence(string filePath);
         public void ImportSequence();
     }
 }

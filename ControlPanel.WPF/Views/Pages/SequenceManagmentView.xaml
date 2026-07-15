@@ -28,8 +28,11 @@
                     <WrapPanel>
                         <ToggleButton Margin="4" Content="Start" />
                         <ToggleButton Margin="4" Content="Stop" />
-                        <ToggleButton Margin="4" Content="Save" />
-                        <ToggleButton Margin="4" Content="Import Program" />
+                        <ToggleButton
+                            Margin="4"
+                            Command="{Binding ExportFileCommand}"
+                            Content="Export Sequence" />
+                        <ToggleButton Margin="4" Content="Import Sequence" />
 
                     </WrapPanel>
                 </GroupBox>

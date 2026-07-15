@@ -12,10 +12,10 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 {
     public class ConfigurationViewModel : BaseViewModel
     {
-        private ISerialCommunication _serialCommunication;
+        private ISerialCommunicationService _serialCommunication;
         private IUserInteractionService _userInteractionService;
         private IRobotStateService _robotStateService;
-        public ConfigurationViewModel(IUserInteractionService userInteractionService,ISerialCommunication serialCommunication, IRobotStateService robotStateService) {
+        public ConfigurationViewModel(IUserInteractionService userInteractionService,ISerialCommunicationService serialCommunication, IRobotStateService robotStateService) {
             _serialCommunication = serialCommunication;
             _userInteractionService = userInteractionService;
             _robotStateService = robotStateService;
