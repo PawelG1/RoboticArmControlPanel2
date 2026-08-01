@@ -72,7 +72,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         public ICommand OpenSequenceManagmentPageCommand { get; set; }
         public void OpenSequenceManagmentPage(object _)
         {
-            CurrentView = _userInteractionService.GetView(new SequenceManagmentViewModel(_robotSequenceService ,_robotStateService, _robotControlService, robotVisualiser3DViewModel));
+            CurrentView = _userInteractionService.GetView(new SequenceManagmentViewModel(_userInteractionService ,_robotSequenceService ,_robotStateService, _robotControlService, robotVisualiser3DViewModel));
         }
 
     }

@@ -1,5 +1,5 @@
 ﻿using ControlPanel.Application.Interfaces;
-using ControlPanel.Application.Services;
+using ControlPanel.Domain.ValueObjects;
 using System.Text;
 using System.Text.Json;
 
@@ -17,9 +17,15 @@ namespace ControlPanel.Infrastructure.Persistence
             File.WriteAllLines(filePath, serializedSteps);
         }
 
-        public List<Step> ImportSequenceFile()
+        public List<Step> ImportSequenceFile(string filePath)
         {
-            throw new NotImplementedException();
+            List<Step> deserializedSequence = new();
+            foreach (string line in File.ReadLines(filePath))
+            {
+                Step step = JsonSerializer.Deserialize<Step>(line);
+                deserializedSequence.Add(step);
+            }
+            return deserializedSequence;
         }
 
         public void SaveSequenceFile()
