@@ -17,6 +17,7 @@ namespace ControlPanel.Application.DTOs.IncomingMessages
         public int EStop { get; set; }
         public List<EncoderDTO> Encoders { get; set; } = new();
         public int SteppersEnabled { get; set; }
+        public List<ServoDTO> Servos { get; set; }= new();
         public string Status { get; set; } = "";
     }
 
@@ -24,5 +25,12 @@ namespace ControlPanel.Application.DTOs.IncomingMessages
     {
         public int Id { get; set; }
         public double JointAngle { get; set; }
+    }
+
+    public class ServoDTO {
+        public int Id { get; set; }
+        public double Angle { get; set; }
+        public double Target { get; set; }
+        public bool Moving { get; set; }
     }
 }

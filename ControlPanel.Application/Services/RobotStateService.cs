@@ -6,6 +6,7 @@ using ControlPanel.Domain.Entities;
 using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -159,7 +160,15 @@ namespace ControlPanel.Application.Services
                 Actuator? actuator = Robot.GetActuatorById(encoder.Id);
                 if(actuator == null)
                     continue;
-                Robot.UpdateActuator(actuator, encoder.JointAngle);
+                Robot.UpdateActuator(actuator, currentAngle:  encoder.JointAngle);
+            }
+
+            foreach(var servo in dto.Values.Servos)
+            {
+                Actuator? actuator = Robot.GetActuatorById(servo.Id);
+                if (actuator == null)
+                    continue;
+                Robot.UpdateActuator(actuator, currentAngle: servo.Angle);
             }
 
             StateUpdated?.Invoke(this, EventArgs.Empty);
