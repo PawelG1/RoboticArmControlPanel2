@@ -1,5 +1,6 @@
 ﻿using ControlPanel.Presentation.WPF.Common;
 using ControlPanel.Presentation.WPF.ViewModels;
+using ControlPanel.Presentation.WPF.Views.Controls;
 using ControlPanel.Presentation.WPF.Views.Pages;
 using ControlPanel.WPF.Services.Interfaces;
 using Microsoft.Win32;
@@ -64,9 +65,13 @@ namespace ControlPanel.WPF.Services
             }
         }
 
-        public void ShowError(string message, string title = "Error")
+        public void ShowError(string message, string title = "An error occured")
         {
-            throw new NotImplementedException();
+            var view = new ErrorMessageBox(message, title)
+            {
+                Owner = System.Windows.Application.Current.MainWindow
+            };
+            view.ShowDialog();
         }
 
         public string? OpenFileDialog(string filter, string title = "Select Files")

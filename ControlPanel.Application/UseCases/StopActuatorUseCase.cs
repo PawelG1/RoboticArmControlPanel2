@@ -10,9 +10,9 @@ namespace ControlPanel.Application.UseCases
 {
     public class StopActuatorUseCase
     {
-        private readonly ISerialCommunication _serialCommunication;
+        private readonly ISerialCommunicationService _serialCommunication;
         private readonly Robot _robot;
-        public StopActuatorUseCase(Robot robot, ISerialCommunication serialCommunication)
+        public StopActuatorUseCase(Robot robot, ISerialCommunicationService serialCommunication)
         {
            _robot = robot;
            _serialCommunication = serialCommunication;

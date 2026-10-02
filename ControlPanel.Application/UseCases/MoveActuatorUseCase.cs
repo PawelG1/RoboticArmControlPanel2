@@ -4,14 +4,15 @@ using ControlPanel.Application.Serialization;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Domain.Enums;
 
+//TODO: verify if we really need usecases bc there are quite simple
 namespace ControlPanel.Application.UseCases
 {
     public class MoveActuatorUseCase
     {
-        private readonly ISerialCommunication _serialCommunication;
+        private readonly ISerialCommunicationService _serialCommunication;
         private readonly Robot _robot;
 
-        public MoveActuatorUseCase(Robot robot, ISerialCommunication serialCommunication)
+        public MoveActuatorUseCase(Robot robot, ISerialCommunicationService serialCommunication)
         {
             _serialCommunication = serialCommunication;
             _robot = robot;

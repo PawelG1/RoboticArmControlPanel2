@@ -6,6 +6,7 @@ using ControlPanel.Domain.Entities;
 using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -13,7 +14,7 @@ namespace ControlPanel.Application.Services
 {
     public class RobotStateService : IRobotStateService
     {
-        private readonly ISerialCommunication _serialCommunication;
+        private readonly ISerialCommunicationService _serialCommunication;
 
      
         public Robot Robot { get; }
@@ -29,7 +30,7 @@ namespace ControlPanel.Application.Services
         };
 
 
-        public RobotStateService(ISerialCommunication serialCommunication, Robot robot)
+        public RobotStateService(ISerialCommunicationService serialCommunication, Robot robot)
         {
             _serialCommunication = serialCommunication;
             Robot = robot;
@@ -66,7 +67,7 @@ namespace ControlPanel.Application.Services
             {
                 Actuators = actuatorsDTOs.ToList(),
                 IsConfigured = Robot.IsConfigured
-                //in future add maybe more props
+                //TODO:in future add maybe more props
             };
         }
 
@@ -159,7 +160,15 @@ namespace ControlPanel.Application.Services
                 Actuator? actuator = Robot.GetActuatorById(encoder.Id);
                 if(actuator == null)
                     continue;
-                Robot.UpdateActuator(actuator, encoder.JointAngle);
+                Robot.UpdateActuator(actuator, currentAngle:  encoder.JointAngle);
+            }
+
+            foreach(var servo in dto.Values.Servos)
+            {
+                Actuator? actuator = Robot.GetActuatorById(servo.Id);
+                if (actuator == null)
+                    continue;
+                Robot.UpdateActuator(actuator, currentAngle: servo.Angle);
             }
 
             StateUpdated?.Invoke(this, EventArgs.Empty);
