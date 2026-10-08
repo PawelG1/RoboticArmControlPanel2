@@ -1,4 +1,4 @@
-﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Interfaces;
 using ControlPanel.Application.UseCases;
 
 
@@ -9,15 +9,18 @@ namespace ControlPanel.Application.Services
         private readonly MoveActuatorUseCase _moveActuatorUseCase;
         private readonly StopActuatorUseCase _stopActuatorUseCase;
         private readonly StopAllActuatorsUseCase _stopAllActuatorsUseCase;
+        private readonly CalibrateActuatorUseCase _calibrateActuatorUseCase;
 
         public RobotControlService(
             MoveActuatorUseCase moveActuatorUseCase,
             StopActuatorUseCase stopActuatorUseCase,
-            StopAllActuatorsUseCase stopAllActuatorsUseCase)
+            StopAllActuatorsUseCase stopAllActuatorsUseCase,
+            CalibrateActuatorUseCase calibrateActuatorUseCase)
         {
             _moveActuatorUseCase = moveActuatorUseCase;
             _stopActuatorUseCase = stopActuatorUseCase;
             _stopAllActuatorsUseCase = stopAllActuatorsUseCase;
+            _calibrateActuatorUseCase = calibrateActuatorUseCase;
         }
 
         public Task MoveActuator(int actuatorId, double targetAngle, int speed)
@@ -32,6 +35,11 @@ namespace ControlPanel.Application.Services
 
         public Task StopAllActuators() {
             return _stopAllActuatorsUseCase.Execute();
+        }
+
+        public Task CalibrateActuator(int actuatorId, byte options)
+        {
+            return _calibrateActuatorUseCase.Execute(actuatorId, options);
         }
 
     }

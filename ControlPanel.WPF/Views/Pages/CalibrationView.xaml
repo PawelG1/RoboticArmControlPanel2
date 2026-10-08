@@ -1,0 +1,35 @@
+<UserControl
+    x:Class="ControlPanel.Presentation.WPF.Views.Pages.CalibrationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    mc:Ignorable="d"
+    d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="10">
+        <StackPanel>
+            <GroupBox Header="Actuator Calibration">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Select Stepper to Calibrate:" Margin="0,0,0,5" />
+                    <ComboBox ItemsSource="{Binding Steppers}" 
+                              SelectedItem="{Binding SelectedStepper}" 
+                              DisplayMemberPath="Name" 
+                              Width="200" HorizontalAlignment="Left" Margin="0,0,0,15" />
+
+                    <CheckBox Content="Set Zero (Aktualny kąt enkodera staje się zerem)" 
+                              IsChecked="{Binding SetZero}" Margin="0,0,0,10"/>
+                    
+                    <CheckBox Content="Invert Direction (Wartość odwrócenia kierunku)" 
+                              IsChecked="{Binding InvertDir}" Margin="0,0,0,10"/>
+
+                    <CheckBox Content="Write Invert Direction to EEPROM (Zapisz ustawienie do pamięci)" 
+                              IsChecked="{Binding WriteInvertDir}" Margin="0,0,0,15"/>
+
+                    <Button Content="Calibrate" 
+                            Command="{Binding CalibrateCommand}" 
+                            Width="150" HorizontalAlignment="Left" Padding="5"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+    </Grid>
+</UserControl>
