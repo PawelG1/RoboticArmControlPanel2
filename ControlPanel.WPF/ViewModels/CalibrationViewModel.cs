@@ -110,12 +110,13 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         {
             if (SelectedStepper == null) return;
 
-            byte options = 0;
-            if (SetZero) options |= 0x01;
-            if (InvertDir) options |= 0x02;
-            if (WriteInvertDir) options |= 0x04;
+            ControlPanel.Domain.Enums.CalibrationOptions options = ControlPanel.Domain.Enums.CalibrationOptions.None;
+            
+            if (SetZero) options |= ControlPanel.Domain.Enums.CalibrationOptions.SetZero;
+            if (InvertDir) options |= ControlPanel.Domain.Enums.CalibrationOptions.InvertDir;
+            if (WriteInvertDir) options |= ControlPanel.Domain.Enums.CalibrationOptions.WriteInvertDir;
 
-            _robotControlService.CalibrateActuator(SelectedStepper.Id, options);
+            _robotControlService.CalibrateActuator(SelectedStepper.Id, (byte)options);
         }
     }
 }

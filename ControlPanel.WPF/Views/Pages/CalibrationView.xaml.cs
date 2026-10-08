@@ -10,3 +10,4 @@ namespace ControlPanel.Presentation.WPF.Views.Pages
         }
     }
 }
+
