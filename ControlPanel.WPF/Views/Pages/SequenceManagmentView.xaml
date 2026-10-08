@@ -28,7 +28,7 @@
             <StackPanel Grid.Column="0" Orientation="Vertical">
                 <GroupBox Height="auto" Header="">
                     <WrapPanel>
-                        <ToggleButton Margin="4" Content="Start" />
+                        <ToggleButton Margin="4" Content="Loop Sequence" IsChecked="{Binding IsLooping}" />
                         <Button
                             Margin="4"
                             Command="{Binding ExecuteNextStepCommand}"
@@ -37,7 +37,10 @@
                             Margin="4"
                             Command="{Binding ExecuteSequenceCommand}"
                             Content="Execute Sequence" />
-                        <ToggleButton Margin="4" Content="Stop" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding StopSequenceCommand}"
+                            Content="Stop Sequence" />
                         <Button
                             Margin="4"
                             Command="{Binding ExportSequenceFileCommand}"

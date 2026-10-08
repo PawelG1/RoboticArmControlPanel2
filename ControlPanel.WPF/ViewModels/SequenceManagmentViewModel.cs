@@ -31,6 +31,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             ClearSequenceCommand = new RelayCommand(ClearSequence);
             ExecuteNextStepCommand = new RelayCommand(ExecuteNextStep);
             ExecuteSequenceCommand = new RelayCommand(ExecuteSequence);
+            StopSequenceCommand = new RelayCommand(StopSequence);
             AddDelayStepCommand = new RelayCommand(AddDelayStep);
 
             LoadAllRecordedSteps();
@@ -136,16 +137,56 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
         }
 
+        private CancellationTokenSource? _sequenceCancellationTokenSource;
+        private bool _isExecutingSequence;
+        public bool IsExecutingSequence
+        {
+            get => _isExecutingSequence;
+            set
+            {
+                _isExecutingSequence = value;
+                NotifyPropertyChanged(nameof(IsExecutingSequence));
+            }
+        }
+
+        private bool _isLooping;
+        public bool IsLooping
+        {
+            get => _isLooping;
+            set
+            {
+                _isLooping = value;
+                NotifyPropertyChanged(nameof(IsLooping));
+            }
+        }
+
         public ICommand ExecuteSequenceCommand { get; }
+        public ICommand StopSequenceCommand { get; }
+
+        public void StopSequence(object _)
+        {
+            _sequenceCancellationTokenSource?.Cancel();
+        }
+
         public async void ExecuteSequence(object _)
         {
+            if (IsExecutingSequence) return;
             try
             {
-                await _robotSequenceService.ExecuteSequence();
+                IsExecutingSequence = true;
+                _sequenceCancellationTokenSource = new CancellationTokenSource();
+                await _robotSequenceService.ExecuteSequence(IsLooping, _sequenceCancellationTokenSource.Token);
             }
+            catch (TaskCanceledException) { }
             catch(Exception ex)
             {
                 _userInteractionService.ShowError(ex.ToString());
+            }
+            finally
+            {
+                IsExecutingSequence = false;
+                _sequenceCancellationTokenSource?.Dispose();
+                _sequenceCancellationTokenSource = null;
             }
         }
 

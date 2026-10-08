@@ -16,9 +16,9 @@ namespace ControlPanel.Application.Interfaces
         public IEnumerable<Step> GetAllSteps();
         public Step GetStep(int idx);
         public void RemoveStep(int idx);
-        public Task ExecuteSequence();
+        public Task ExecuteSequence(bool loop = false, CancellationToken cancellationToken = default);
         public void ExecuteNextStep();
-        public Task ExecuteNextStepAsync();
+        public Task ExecuteNextStepAsync(CancellationToken cancellationToken = default);
         public void ClearSequence();
         public void ExportSequence(string filePath);
         public void ImportSequence(string filePath);

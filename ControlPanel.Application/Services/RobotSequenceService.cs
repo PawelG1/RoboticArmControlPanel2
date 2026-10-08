@@ -77,7 +77,7 @@ namespace ControlPanel.Application.Services
             throw new NotImplementedException();
         }
 
-        public async Task ExecuteSequence()
+        public async Task ExecuteSequence(bool loop = false, CancellationToken cancellationToken = default)
         {
             int count = _steps.Count;
             if (count == 0) return;
@@ -88,11 +88,12 @@ namespace ControlPanel.Application.Services
             int startIdx = NextStepIdx;
             do
             {
-                await ExecuteNextStepAsync();
-            } while (NextStepIdx != 0 && NextStepIdx != startIdx);
+                if (cancellationToken.IsCancellationRequested) break;
+                await ExecuteNextStepAsync(cancellationToken);
+            } while (loop || (NextStepIdx != 0 && NextStepIdx != startIdx));
         }
 
-        public async Task ExecuteNextStepAsync()
+        public async Task ExecuteNextStepAsync(CancellationToken cancellationToken = default)
         {
             if (_steps.Count == 0 || NextStepIdx >= _steps.Count) return;
 
@@ -100,7 +101,7 @@ namespace ControlPanel.Application.Services
             
             if (nextStep.StepType == StepType.Wait && nextStep.Delay.HasValue)
             {
-                await Task.Delay(nextStep.Delay.Value);
+                await Task.Delay(nextStep.Delay.Value, cancellationToken);
             }
             else if (nextStep.StepType == StepType.Move && nextStep.Pose != null)
             {
@@ -114,15 +115,16 @@ namespace ControlPanel.Application.Services
 
                 // Wait for movement to finish
                 // First wait a bit for the firmware to start moving and send INFO (MOVING)
-                await Task.Delay(200);
+                await Task.Delay(200, cancellationToken);
 
                 // Wait for movement to finish
-                await Task.Delay(200);
+                await Task.Delay(200, cancellationToken);
 
                 bool isMoving = true;
                 while (isMoving)
                 {
-                    await Task.Delay(100);
+                    if (cancellationToken.IsCancellationRequested) break;
+                    await Task.Delay(100, cancellationToken);
                     isMoving = false;
                     
                     var robotState = _robotStateService.GetRobotState();
@@ -137,7 +139,10 @@ namespace ControlPanel.Application.Services
                 }
             }
 
-            NextStepIdx++;
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                NextStepIdx++;
+            }
         }
 
         public void ExecuteNextStep()
