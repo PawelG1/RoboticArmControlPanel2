@@ -111,9 +111,9 @@ namespace ControlPanel.Application.Services
 
             var servos = new List<Actuator>
             {
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo1, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 18), BitConverter.ToUInt16(payload, 20))),
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo2, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 22), BitConverter.ToUInt16(payload, 24))),
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo3, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 26), BitConverter.ToUInt16(payload, 28)))
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo1, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 18) / 100.0, BitConverter.ToUInt16(payload, 20) / 100.0)),
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo2, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 22) / 100.0, BitConverter.ToUInt16(payload, 24) / 100.0)),
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo3, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 26) / 100.0, BitConverter.ToUInt16(payload, 28) / 100.0))
             };
 
             var config = new RobotConfig(steppers, servos, new Dictionary<string, int>());
@@ -177,17 +177,17 @@ namespace ControlPanel.Application.Services
             if (stepper1 != null) Robot.UpdateActuator(stepper1, currentAngle: stepper1Angle);
 
             // Servo 0
-            double servo0Angle = BitConverter.ToUInt16(payload, 23);
+            double servo0Angle = BitConverter.ToUInt16(payload, 23) / 100.0;
             Actuator? servo0 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo1);
             if (servo0 != null) Robot.UpdateActuator(servo0, currentAngle: servo0Angle);
 
             // Servo 1
-            double servo1Angle = BitConverter.ToUInt16(payload, 28);
+            double servo1Angle = BitConverter.ToUInt16(payload, 28) / 100.0;
             Actuator? servo1 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo2);
             if (servo1 != null) Robot.UpdateActuator(servo1, currentAngle: servo1Angle);
 
             // Servo 2
-            double servo2Angle = BitConverter.ToUInt16(payload, 33);
+            double servo2Angle = BitConverter.ToUInt16(payload, 33) / 100.0;
             Actuator? servo2 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo3);
             if (servo2 != null) Robot.UpdateActuator(servo2, currentAngle: servo2Angle);
 
