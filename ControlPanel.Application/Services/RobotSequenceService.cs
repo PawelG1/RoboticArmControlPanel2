@@ -1,4 +1,4 @@
-﻿using ControlPanel.Application.DTOs;
+using ControlPanel.Application.DTOs;
 using ControlPanel.Application.Interfaces;
 using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
@@ -12,13 +12,15 @@ namespace ControlPanel.Application.Services
     {
         private readonly ISequenceRepository _sequenceRepository;
         private readonly IRobotControlService _robotControlService;
+        private readonly IRobotStateService _robotStateService;
         private List<Step> _steps = new();
         public event EventHandler? OnExecuteNextStep;
 
-        public RobotSequenceService(ISequenceRepository sequenceRepository, IRobotControlService robotControlService)
+        public RobotSequenceService(ISequenceRepository sequenceRepository, IRobotControlService robotControlService, IRobotStateService robotStateService)
         {
             _sequenceRepository = sequenceRepository;
             _robotControlService = robotControlService;
+            _robotStateService = robotStateService;
             NextStepIdx = 0;
         }
 
@@ -75,22 +77,72 @@ namespace ControlPanel.Application.Services
             throw new NotImplementedException();
         }
 
-        public void ExecuteSequence()
+        public async Task ExecuteSequence()
         {
-            throw new NotImplementedException();
+            int count = _steps.Count;
+            if (count == 0) return;
+            
+            // If we are at the end, wrap to start
+            if (NextStepIdx >= count) NextStepIdx = 0;
+            
+            int startIdx = NextStepIdx;
+            do
+            {
+                await ExecuteNextStepAsync();
+            } while (NextStepIdx != 0 && NextStepIdx != startIdx);
+        }
+
+        public async Task ExecuteNextStepAsync()
+        {
+            if (_steps.Count == 0 || NextStepIdx >= _steps.Count) return;
+
+            Step nextStep = GetStep(NextStepIdx);
+            
+            if (nextStep.StepType == StepType.Wait && nextStep.Delay.HasValue)
+            {
+                await Task.Delay(nextStep.Delay.Value);
+            }
+            else if (nextStep.StepType == StepType.Move && nextStep.Pose != null)
+            {
+                int movementSpeed = nextStep.MovementSpeed;
+                if (movementSpeed > 255) movementSpeed = 200; // firmware limit
+
+                foreach (ActuatorTarget target in nextStep.Pose.ActuatorTargets)
+                {
+                    await _robotControlService.MoveActuator(target.ActuatorId, target.TargetAngle, movementSpeed);
+                }
+
+                // Wait for movement to finish
+                // First wait a bit for the firmware to start moving and send INFO (MOVING)
+                await Task.Delay(200);
+
+                // Wait for movement to finish
+                await Task.Delay(200);
+
+                bool isMoving = true;
+                while (isMoving)
+                {
+                    await Task.Delay(100);
+                    isMoving = false;
+                    
+                    var robotState = _robotStateService.GetRobotState();
+                    foreach (var actuator in robotState.Actuators)
+                    {
+                        if (actuator.ActuatorState.Status == ControlPanel.Application.DTOs.IncomingMessages.ActuatorStatusWire.MOVING)
+                        {
+                            isMoving = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            NextStepIdx++;
         }
 
         public void ExecuteNextStep()
         {
-            Step nextStep = GetStep(NextStepIdx);
-            int movementSpeed = nextStep.MovementSpeed;
-            if (nextStep.Pose == null)
-                return;
-            foreach (ActuatorTarget target in nextStep.Pose.ActuatorTargets)
-            {
-                _robotControlService.MoveActuator(target.ActuatorId, target.TargetAngle, movementSpeed);
-            }
-            NextStepIdx++;
+            _ = ExecuteNextStepAsync();
         }
 
         public void ClearSequence()

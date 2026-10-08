@@ -1,4 +1,4 @@
-﻿using ControlPanel.Application.DTOs;
+using ControlPanel.Application.DTOs;
 using ControlPanel.Application.Interfaces;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Domain.Enums;
@@ -30,6 +30,8 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             ImportSequenceFileCommand = new RelayCommand(ImportSequenceFile);
             ClearSequenceCommand = new RelayCommand(ClearSequence);
             ExecuteNextStepCommand = new RelayCommand(ExecuteNextStep);
+            ExecuteSequenceCommand = new RelayCommand(ExecuteSequence);
+            AddDelayStepCommand = new RelayCommand(AddDelayStep);
 
             LoadAllRecordedSteps();
 
@@ -58,7 +60,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             if (!robotStateDTO.IsConfigured)
                 return;
             //TODO: get speed set by user on UI
-            int defaultSpeed = 400;
+            int defaultSpeed = 200;
             Step recordedStep = _robotSequenceService.RecordStep(StepType.Move, robotStateDTO, defaultSpeed);
             Steps.Add(new SequenceStepViewModel(recordedStep));
         }
@@ -122,16 +124,47 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         }
 
         public ICommand ExecuteNextStepCommand { get; }
-        public void ExecuteNextStep(object _)
+        public async void ExecuteNextStep(object _)
         {
             try
             {
-                _robotSequenceService.ExecuteNextStep();
+                await _robotSequenceService.ExecuteNextStepAsync();
             }
             catch(Exception ex)
             {
                 _userInteractionService.ShowError(ex.ToString());
             }
+        }
+
+        public ICommand ExecuteSequenceCommand { get; }
+        public async void ExecuteSequence(object _)
+        {
+            try
+            {
+                await _robotSequenceService.ExecuteSequence();
+            }
+            catch(Exception ex)
+            {
+                _userInteractionService.ShowError(ex.ToString());
+            }
+        }
+
+        private double _delaySeconds = 1.0;
+        public double DelaySeconds
+        {
+            get => _delaySeconds;
+            set
+            {
+                _delaySeconds = value;
+                NotifyPropertyChanged(nameof(DelaySeconds));
+            }
+        }
+
+        public ICommand AddDelayStepCommand { get; }
+        public void AddDelayStep(object _)
+        {
+            Step recordedStep = _robotSequenceService.RecordStep(StepType.Wait, TimeSpan.FromSeconds(DelaySeconds));
+            Steps.Add(new SequenceStepViewModel(recordedStep));
         }
 
         private void LoadAllRecordedSteps()

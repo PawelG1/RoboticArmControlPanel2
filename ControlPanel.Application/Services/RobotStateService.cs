@@ -166,30 +166,39 @@ namespace ControlPanel.Application.Services
                 return;
             }
 
+            ActuatorState DetermineStatus(Actuator actuator, bool isMoving)
+            {
+                if (isMoving) return ActuatorState.Moving;
+                if (actuator.GetState == ActuatorState.Moving) return ActuatorState.Idle;
+                return actuator.GetState;
+            }
+
+            byte steppersEnabled = payload[22];
+
             // Stepper 0
             double stepper0Angle = BitConverter.ToInt32(payload, 6) / 100.0;
             Actuator? stepper0 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Stepper1);
-            if (stepper0 != null) Robot.UpdateActuator(stepper0, currentAngle: stepper0Angle);
+            if (stepper0 != null) Robot.UpdateActuator(stepper0, currentAngle: stepper0Angle, state: DetermineStatus(stepper0, (steppersEnabled & (1 << 0)) != 0));
 
             // Stepper 1
             double stepper1Angle = BitConverter.ToInt32(payload, 14) / 100.0;
             Actuator? stepper1 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Stepper2);
-            if (stepper1 != null) Robot.UpdateActuator(stepper1, currentAngle: stepper1Angle);
+            if (stepper1 != null) Robot.UpdateActuator(stepper1, currentAngle: stepper1Angle, state: DetermineStatus(stepper1, (steppersEnabled & (1 << 1)) != 0));
 
             // Servo 0 (offset 23)
             double servo0Angle = BitConverter.ToInt32(payload, 23) / 100.0;
             Actuator? servo0 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo1);
-            if (servo0 != null) Robot.UpdateActuator(servo0, currentAngle: servo0Angle);
+            if (servo0 != null) Robot.UpdateActuator(servo0, currentAngle: servo0Angle, state: DetermineStatus(servo0, payload[31] != 0));
 
             // Servo 1 (offset 32)
             double servo1Angle = BitConverter.ToInt32(payload, 32) / 100.0;
             Actuator? servo1 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo2);
-            if (servo1 != null) Robot.UpdateActuator(servo1, currentAngle: servo1Angle);
+            if (servo1 != null) Robot.UpdateActuator(servo1, currentAngle: servo1Angle, state: DetermineStatus(servo1, payload[40] != 0));
 
             // Servo 2 (offset 41)
             double servo2Angle = BitConverter.ToInt32(payload, 41) / 100.0;
             Actuator? servo2 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo3);
-            if (servo2 != null) Robot.UpdateActuator(servo2, currentAngle: servo2Angle);
+            if (servo2 != null) Robot.UpdateActuator(servo2, currentAngle: servo2Angle, state: DetermineStatus(servo2, payload[49] != 0));
 
             StateUpdated?.Invoke(this, EventArgs.Empty);
         }

@@ -1,4 +1,4 @@
-﻿using ControlPanel.Application.DTOs;
+using ControlPanel.Application.DTOs;
 using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
 using System;
@@ -16,8 +16,9 @@ namespace ControlPanel.Application.Interfaces
         public IEnumerable<Step> GetAllSteps();
         public Step GetStep(int idx);
         public void RemoveStep(int idx);
-        public void ExecuteSequence();
+        public Task ExecuteSequence();
         public void ExecuteNextStep();
+        public Task ExecuteNextStepAsync();
         public void ClearSequence();
         public void ExportSequence(string filePath);
         public void ImportSequence(string filePath);
