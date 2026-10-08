@@ -11,3 +11,4 @@ namespace ControlPanel.Domain.Enums
         WriteInvertDir = 1 << 2    // 0x04
     }
 }
+

@@ -60,6 +60,11 @@ namespace ControlPanel.WPF.Services
                     {
                         DataContext = simpleControlViewModel
                     };
+                case CalibrationViewModel calibrationViewModel:
+                    return new CalibrationView()
+                    {
+                        DataContext = calibrationViewModel
+                    };
                 default:
                     throw new ArgumentException($"No page found for view model of type {viewModel.GetType().Name}");
             }

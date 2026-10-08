@@ -7,5 +7,7 @@ namespace ControlPanel.Application.Interfaces
         Task StopActuator(int actuatorId);
         Task StopAllActuators();
         Task CalibrateActuator(int actuatorId, byte options);
+        Task SetLimitsActuator(int actuatorId, double minAngle, double maxAngle);
+        Task GetConfig();
     }
 }

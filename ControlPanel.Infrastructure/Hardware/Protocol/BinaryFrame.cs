@@ -5,7 +5,7 @@ namespace ControlPanel.Infrastructure.Hardware.Protocol
 {
     public class BinaryFrame
     {
-        public byte Version { get; set; } = 3;
+        public byte Version { get; set; } = 4;
         public byte MessageType { get; set; }
         public byte Flags { get; set; } = 0;
         public ushort Sequence { get; set; }
@@ -48,7 +48,7 @@ namespace ControlPanel.Infrastructure.Hardware.Protocol
 
             var frame = new BinaryFrame();
             frame.Version = decodedBytes[0];
-            if (frame.Version != 3) return null;
+            if (frame.Version != 4) return null;
 
             frame.MessageType = decodedBytes[1];
             frame.Flags = decodedBytes[2];

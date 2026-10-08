@@ -55,6 +55,8 @@ namespace ControlPanel.DI
             services.AddTransient<StopActuatorUseCase>();
             services.AddTransient<StopAllActuatorsUseCase>();
             services.AddTransient<CalibrateActuatorUseCase>();
+            services.AddTransient<SetLimitsActuatorUseCase>();
+            services.AddTransient<GetConfigUseCase>();
         }
 
     }

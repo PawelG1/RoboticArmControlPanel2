@@ -12,17 +12,23 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         private readonly IRobotStateService _robotStateService;
         private readonly IRobotControlService _robotControlService;
 
-        public ObservableCollection<ActuatorControlViewModel> Steppers { get; } = new();
+        public ObservableCollection<ActuatorControlViewModel> Actuators { get; } = new();
 
-        private ActuatorControlViewModel? _selectedStepper;
-        public ActuatorControlViewModel? SelectedStepper
+        private ActuatorControlViewModel? _selectedActuator;
+        public ActuatorControlViewModel? SelectedActuator
         {
-            get => _selectedStepper;
+            get => _selectedActuator;
             set
             {
-                _selectedStepper = value;
-                NotifyPropertyChanged(nameof(SelectedStepper));
+                _selectedActuator = value;
+                NotifyPropertyChanged(nameof(SelectedActuator));
+                if (_selectedActuator != null)
+                {
+                    NewMinAngle = _selectedActuator.MinAngle;
+                    NewMaxAngle = _selectedActuator.MaxAngle;
+                }
                 ((RelayCommand)CalibrateCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)SetLimitsCommand).RaiseCanExecuteChanged();
             }
         }
 
@@ -47,7 +53,22 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             set { _writeInvertDir = value; NotifyPropertyChanged(nameof(WriteInvertDir)); }
         }
 
+        private double _newMinAngle;
+        public double NewMinAngle
+        {
+            get => _newMinAngle;
+            set { _newMinAngle = value; NotifyPropertyChanged(nameof(NewMinAngle)); }
+        }
+
+        private double _newMaxAngle;
+        public double NewMaxAngle
+        {
+            get => _newMaxAngle;
+            set { _newMaxAngle = value; NotifyPropertyChanged(nameof(NewMaxAngle)); }
+        }
+
         public ICommand CalibrateCommand { get; }
+        public ICommand SetLimitsCommand { get; }
 
         public CalibrationViewModel(IRobotStateService robotStateService, IRobotControlService robotControlService)
         {
@@ -56,11 +77,12 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
             _robotStateService.RobotConfigured += OnRobotConfigured;
 
-            CalibrateCommand = new RelayCommand(Calibrate, CanCalibrate);
+            CalibrateCommand = new RelayCommand(Calibrate, CanExecuteActuatorCommand);
+            SetLimitsCommand = new RelayCommand(SetLimits, CanExecuteActuatorCommand);
 
             if (_robotStateService.Robot.IsConfigured)
             {
-                LoadSteppers();
+                LoadActuators();
             }
         }
 
@@ -74,41 +96,55 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                LoadSteppers();
+                LoadActuators();
             });
         }
 
-        private void LoadSteppers()
+        private void LoadActuators()
         {
-            Steppers.Clear();
-            var actuators = _robotStateService.Robot.GetAllActuators()
-                .Where(a => a.GetId == 0 || a.GetId == 1); // Steppers are 0 and 1
+            var oldSelectedId = SelectedActuator?.Id;
+            Actuators.Clear();
+            var actuators = _robotStateService.Robot.GetAllActuators();
 
             foreach (var actuator in actuators)
             {
-                Steppers.Add(new ActuatorControlViewModel(
+                Actuators.Add(new ActuatorControlViewModel(
                     actuator.GetId,
-                    $"Stepper {actuator.GetId}",
+                    $"Actuator {actuator.GetId}",
                     actuator.GetWorkingLimits.MinAngle,
                     actuator.GetWorkingLimits.MaxAngle,
                     actuator.GetCurrentAngle,
                     _robotControlService
                 ));
             }
-            if (Steppers.Any())
+
+            if (Actuators.Any())
             {
-                SelectedStepper = Steppers.First();
+                if (oldSelectedId.HasValue)
+                {
+                    SelectedActuator = Actuators.FirstOrDefault(a => a.Id == oldSelectedId.Value) ?? Actuators.First();
+                }
+                else
+                {
+                    SelectedActuator = Actuators.First();
+                }
+
+                if (SelectedActuator != null)
+                {
+                    NewMinAngle = SelectedActuator.MinAngle;
+                    NewMaxAngle = SelectedActuator.MaxAngle;
+                }
             }
         }
 
-        private bool CanCalibrate(object? obj)
+        private bool CanExecuteActuatorCommand(object? obj)
         {
-            return SelectedStepper != null;
+            return SelectedActuator != null;
         }
 
         private void Calibrate(object? obj)
         {
-            if (SelectedStepper == null) return;
+            if (SelectedActuator == null) return;
 
             ControlPanel.Domain.Enums.CalibrationOptions options = ControlPanel.Domain.Enums.CalibrationOptions.None;
             
@@ -116,7 +152,16 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             if (InvertDir) options |= ControlPanel.Domain.Enums.CalibrationOptions.InvertDir;
             if (WriteInvertDir) options |= ControlPanel.Domain.Enums.CalibrationOptions.WriteInvertDir;
 
-            _robotControlService.CalibrateActuator(SelectedStepper.Id, (byte)options);
+            _robotControlService.CalibrateActuator(SelectedActuator.Id, (byte)options);
+            _robotControlService.GetConfig();
+        }
+
+        private void SetLimits(object? obj)
+        {
+            if (SelectedActuator == null) return;
+
+            _robotControlService.SetLimitsActuator(SelectedActuator.Id, NewMinAngle, NewMaxAngle);
+            _robotControlService.GetConfig();
         }
     }
 }

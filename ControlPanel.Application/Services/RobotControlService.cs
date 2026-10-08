@@ -10,17 +10,23 @@ namespace ControlPanel.Application.Services
         private readonly StopActuatorUseCase _stopActuatorUseCase;
         private readonly StopAllActuatorsUseCase _stopAllActuatorsUseCase;
         private readonly CalibrateActuatorUseCase _calibrateActuatorUseCase;
+        private readonly SetLimitsActuatorUseCase _setLimitsActuatorUseCase;
+        private readonly GetConfigUseCase _getConfigUseCase;
 
         public RobotControlService(
             MoveActuatorUseCase moveActuatorUseCase,
             StopActuatorUseCase stopActuatorUseCase,
             StopAllActuatorsUseCase stopAllActuatorsUseCase,
-            CalibrateActuatorUseCase calibrateActuatorUseCase)
+            CalibrateActuatorUseCase calibrateActuatorUseCase,
+            SetLimitsActuatorUseCase setLimitsActuatorUseCase,
+            GetConfigUseCase getConfigUseCase)
         {
             _moveActuatorUseCase = moveActuatorUseCase;
             _stopActuatorUseCase = stopActuatorUseCase;
             _stopAllActuatorsUseCase = stopAllActuatorsUseCase;
             _calibrateActuatorUseCase = calibrateActuatorUseCase;
+            _setLimitsActuatorUseCase = setLimitsActuatorUseCase;
+            _getConfigUseCase = getConfigUseCase;
         }
 
         public Task MoveActuator(int actuatorId, double targetAngle, int speed)
@@ -40,6 +46,16 @@ namespace ControlPanel.Application.Services
         public Task CalibrateActuator(int actuatorId, byte options)
         {
             return _calibrateActuatorUseCase.Execute(actuatorId, options);
+        }
+
+        public Task SetLimitsActuator(int actuatorId, double minAngle, double maxAngle)
+        {
+            return _setLimitsActuatorUseCase.Execute(actuatorId, minAngle, maxAngle);
+        }
+
+        public Task GetConfig()
+        {
+            return _getConfigUseCase.Execute();
         }
 
     }
