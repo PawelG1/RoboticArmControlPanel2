@@ -1,4 +1,4 @@
-﻿using System.IO.Ports;
+using System.IO.Ports;
 using System.Text;
 using System.Text.Json;
 
@@ -8,10 +8,8 @@ namespace ControlPanel.Infrastructure.Hardware
     /// <summary> kontrakt na rozmiar i ew. znak konca wiadomosci t.j. \n </summary>
     public enum SerialMessageFraming
     {
-        /// <summary> Jedna linia zakończona jak <see cref="SerialPort.NewLine"/> (domyślnie \n). Nie nadaje się do JSON z realnymi enterami w środku. </summary>
-        Newline,
-        /// <summary> 4 bajty długości payloadu (uint32, little-endian) + bajty UTF-8 — pełna ramka, JSON może zawierać \n. Wymaga tego samego formatu po stronie robota. </summary>
-        LengthPrefixUInt32LittleEndian
+        /// <summary> Binary frame encoded with Consistent Overhead Byte Stuffing (COBS), separated by 0x00. </summary>
+        Cobs
     }
 
     public class SerialPortController : IDisposable
@@ -22,15 +20,13 @@ namespace ControlPanel.Infrastructure.Hardware
         private int _dataBits = 0;
         private StopBits _stopBits;
         private Handshake _handshake;
-        private int _readTimeout = 500; //default read timeout in milliseconds
-        private int _writeTimeout = 500; //default write timeout in milliseconds
+        private int _readTimeout = 500;
+        private int _writeTimeout = 500;
 
         private SerialPort _serialPort;
-        private SemaphoreSlim _requestGate = new(1, 1);
-        private const int MaxFramePayloadBytes = 1024 * 1024;
-
-        private SerialMessageFraming _framing = SerialMessageFraming.Newline;
         private CancellationTokenSource? _readCts;
+
+        public EventHandler<Protocol.BinaryFrame>? OnFrameReceived { get; set; }
 
         public SerialPortController(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits, Handshake handshake = Handshake.None)
         {
@@ -42,8 +38,8 @@ namespace ControlPanel.Infrastructure.Hardware
             _handshake = handshake;
 
             _serialPort = new SerialPort();
-            //ConfigureSerialPort();
         }
+
         public void Dispose()
         {
             _readCts?.Cancel();
@@ -51,7 +47,7 @@ namespace ControlPanel.Infrastructure.Hardware
             _serialPort.Dispose();
         }
 
-        public void ConfigureSerialPort(SerialMessageFraming framing = SerialMessageFraming.Newline)
+        public void ConfigureSerialPort()
         {
             _serialPort.PortName = _portName;
             _serialPort.BaudRate = _baudRate;
@@ -61,10 +57,9 @@ namespace ControlPanel.Infrastructure.Hardware
             _serialPort.Handshake = _handshake;
             _serialPort.ReadTimeout = _readTimeout;
             _serialPort.WriteTimeout = _writeTimeout;
-            _framing = framing;
 
-            _serialPort.DtrEnable = true; // Enable DTR to ensure Arduino resets on connect, can be adjusted based on hardware needs
-            _serialPort.RtsEnable = true; // Enable RTS if needed by the hardware, can be adjusted
+            _serialPort.DtrEnable = true;
+            _serialPort.RtsEnable = true;
         }
 
         public void SetPortName(string portName)
@@ -78,25 +73,11 @@ namespace ControlPanel.Infrastructure.Hardware
             _portName = portName;
         }
 
-        public string GetPortName()
-        {
-            return _serialPort.PortName;
-        }
-
-        public bool GetPortStatus()
-        {
-            return _serialPort.IsOpen;
-        }
-
-        public void SetReadTimeout(int timeout)
-        {
-            _readTimeout = timeout;
-        }
-
-        public void SetWriteTimeout(int timeout)
-        {
-            _serialPort.WriteTimeout = timeout;
-        }
+        public string GetPortName() => _serialPort.PortName;
+        public bool GetPortStatus() => _serialPort.IsOpen;
+        public void SetReadTimeout(int timeout) => _readTimeout = timeout;
+        public void SetWriteTimeout(int timeout) => _serialPort.WriteTimeout = timeout;
+        public static string[] GetSerialPorts() => SerialPort.GetPortNames();
 
         public bool OpenSerialPort()
         {
@@ -105,12 +86,13 @@ namespace ControlPanel.Infrastructure.Hardware
                 if (!_serialPort.IsOpen)
                 {
                     _serialPort.Open();
+                    _serialPort.DiscardInBuffer();
                     _readCts = new CancellationTokenSource();
                     Task.Run(() => ReadLoop(_readCts.Token));
                 }
                 return true;
             }
-            catch (Exception ex)//TODO: move exception handling to a higher level and log the exception instead of writing it to the consol
+            catch (Exception ex)
             {
                 Console.WriteLine($"Error opening serial port: {ex.Message}");
                 return false;
@@ -134,126 +116,10 @@ namespace ControlPanel.Infrastructure.Hardware
             {
                 Console.WriteLine($"Error closing serial port: {ex.Message}");
                 return false;
-
             }
         }
 
-        public static string[] GetSerialPorts()
-        {
-            return SerialPort.GetPortNames();
-        }
-
-        public async Task<bool> WriteToSerialPort(string data)
-        {
-            try
-            {
-                if (_serialPort.IsOpen)
-                {
-                    await Task.Run(() => _serialPort.WriteLine(data));
-                    return true;
-                }
-                else
-                {
-                    Console.WriteLine("Serial port is not open.");
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error writing to serial port: {ex.Message}");
-                return false;
-            }
-        }
-
-        public string? ReadFromSerialPort()
-        {
- 
-            if (_serialPort.IsOpen)
-            {
-                return _serialPort.ReadLine();
-            }
-            else
-            {
-                throw new IOException("Serial port is not open.");
-            }
-
-
-        }
-
-        private async Task ReadLoop(CancellationToken ct)
-        {
-            while(!ct.IsCancellationRequested && _serialPort.IsOpen)
-            {
-                try
-                {
-                    string? message = _framing switch
-                    {
-                        SerialMessageFraming.Newline => _serialPort.ReadLine(),
-                        SerialMessageFraming.LengthPrefixUInt32LittleEndian => ReadLengthPrefixedUtf8(),
-                        _ => null
-                    };
-
-                    if (!string.IsNullOrWhiteSpace(message))
-                        OnMessageReceived?.Invoke(this, message);
-                }
-                catch (TimeoutException) { }
-                catch (OperationCanceledException) { break; }
-                catch (IOException) { break; }
-            }
-        }
-
-        public EventHandler<string>? OnMessageReceived { get; set; }
-
-        /// <summary>
-        /// Wysyła ramkę i czyta odpowiedź tą samą konwencją na puli wątków, więc UI może robić <c>await</c> bez blokowania.
-        /// Domyślnie: koniec linii (<see cref="SerialMessageFraming.Newline"/>). Dla „pełnego JSON-a” bez względu na entery ustaw
-        /// <see cref="SerialMessageFraming.LengthPrefixUInt32LittleEndian"/> — musi tak samo działać firmware.
-        /// </summary>
-        public async Task<string?> SendRequestAsync(string data, SerialMessageFraming framing = SerialMessageFraming.Newline)
-        {
-            var entered = await _requestGate.WaitAsync(0).ConfigureAwait(false);
-            if (!entered)
-            {
-                Console.WriteLine("Serial request already in progress.");
-                return null;
-            }
-
-            try
-            {
-                return await Task.Run(async () =>
-                {
-                    if (!await WriteRequest(data, framing))
-                        return null;
-                    return ReadResponse(framing);
-                }).ConfigureAwait(false);
-            }
-            finally
-            {
-                _requestGate.Release();
-            }
-        }
-
-        private async Task<bool> WriteRequest(string data, SerialMessageFraming framing)
-        {
-            return framing switch
-            {
-                SerialMessageFraming.Newline => await WriteToSerialPort(data),
-                SerialMessageFraming.LengthPrefixUInt32LittleEndian => await WriteLengthPrefixedUtf8(data),
-                _ => false
-            };
-        }
-
-        private string? ReadResponse(SerialMessageFraming framing)
-        {
-            return framing switch
-            {
-                SerialMessageFraming.Newline => ReadFromSerialPort(),
-                SerialMessageFraming.LengthPrefixUInt32LittleEndian => ReadLengthPrefixedUtf8(),
-                _ => null
-            };
-        }
-
-        private async Task<bool> WriteLengthPrefixedUtf8(string data)
+        public async Task<bool> WriteFrameAsync(Protocol.BinaryFrame frame)
         {
             try
             {
@@ -263,78 +129,72 @@ namespace ControlPanel.Infrastructure.Hardware
                     return false;
                 }
 
-                var payload = Encoding.UTF8.GetBytes(data);
-                if (payload.Length > MaxFramePayloadBytes)
-                {
-                    Console.WriteLine("Payload exceeds MaxFramePayloadBytes.");
-                    return false;
-                }
+                byte[] rawFrame = frame.ToBytes();
+                byte[] encoded = Protocol.CobsCodec.Encode(rawFrame);
 
-                var n = (uint)payload.Length;
-                var header = new byte[4];
-                header[0] = (byte)(n & 0xff);
-                header[1] = (byte)((n >> 8) & 0xff);
-                header[2] = (byte)((n >> 16) & 0xff);
-                header[3] = (byte)((n >> 24) & 0xff);
-
-                await _serialPort.BaseStream.WriteAsync(header, 0, 4);
-                await _serialPort.BaseStream.WriteAsync(payload, 0, payload.Length);
+                await _serialPort.BaseStream.WriteAsync(encoded, 0, encoded.Length);
+                await _serialPort.BaseStream.FlushAsync();
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error writing length-prefixed frame: {ex.Message}");
+                Console.WriteLine($"Error writing frame: {ex.Message}");
                 return false;
             }
         }
 
-        private string? ReadLengthPrefixedUtf8()
+        private async Task ReadLoop(CancellationToken ct)
         {
-            try
+            var cobsBuffer = new List<byte>();
+            byte[] readBuf = new byte[1024];
+
+            while(!ct.IsCancellationRequested && _serialPort.IsOpen)
             {
-                if (!_serialPort.IsOpen)
+                try
                 {
-                    Console.WriteLine("Serial port is not open.");
-                    return null;
+                    int bytesToRead = _serialPort.BytesToRead;
+                    if (bytesToRead == 0)
+                    {
+                        await Task.Delay(10, ct);
+                        continue;
+                    }
+
+                    int n = _serialPort.Read(readBuf, 0, Math.Min(bytesToRead, readBuf.Length));
+                    for (int i = 0; i < n; i++)
+                    {
+                        byte b = readBuf[i];
+                        if (b == 0x00)
+                        {
+                            if (cobsBuffer.Count > 0)
+                            {
+                                byte[] decoded = Protocol.CobsCodec.Decode(cobsBuffer.ToArray());
+                                cobsBuffer.Clear();
+
+                                var frame = Protocol.BinaryFrame.Parse(decoded);
+                                if (frame != null)
+                                {
+                                    OnFrameReceived?.Invoke(this, frame);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Avoid huge memory allocations from malformed unbounded data
+                            if (cobsBuffer.Count < 2048)
+                            {
+                                cobsBuffer.Add(b);
+                            }
+                            else
+                            {
+                                cobsBuffer.Clear(); // Buffer overflow, drop malformed frame
+                            }
+                        }
+                    }
                 }
-
-                var header = new byte[4];
-                ReadExact(header, 0, 4);
-                var length =
-                    (uint)header[0]
-                    | ((uint)header[1] << 8)
-                    | ((uint)header[2] << 16)
-                    | ((uint)header[3] << 24);
-
-                if (length > MaxFramePayloadBytes)
-                {
-                    Console.WriteLine("Declared frame length exceeds MaxFramePayloadBytes.");
-                    return null;
-                }
-
-                if (length == 0)
-                    return string.Empty;
-
-                var payload = new byte[length];
-                ReadExact(payload, 0, (int)length);
-                return Encoding.UTF8.GetString(payload);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error reading length-prefixed frame: {ex.Message}");
-                return null;
-            }
-        }
-
-        private void ReadExact(byte[] buffer, int offset, int count)
-        {
-            var read = 0;
-            while (read < count)
-            {
-                var n = _serialPort.Read(buffer, offset + read, count - read);
-                if (n == 0)
-                    throw new EndOfStreamException("Serial read returned 0 bytes before completing frame.");
-                read += n;
+                catch (TimeoutException) { }
+                catch (OperationCanceledException) { break; }
+                catch (IOException) { break; }
+                catch (InvalidOperationException) { break; } // Port closed
             }
         }
 

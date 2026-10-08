@@ -1,8 +1,9 @@
-﻿using ControlPanel.Application.DTOs.SerialCommands;
 using ControlPanel.Application.Interfaces;
-using ControlPanel.Application.Serialization;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Domain.Enums;
+using ControlPanel.Domain.Constants;
+using System;
+using System.Threading.Tasks;
 
 //TODO: verify if we really need usecases bc there are quite simple
 namespace ControlPanel.Application.UseCases
@@ -26,21 +27,19 @@ namespace ControlPanel.Application.UseCases
             {
                 throw new ArgumentException($"Actuator with ID {actuatorId} not found.");
             }
-            targetAngle = Math.Round(targetAngle);
+
+            int angleInt = (int)Math.Round(targetAngle * 100);
+            ushort speedUshort = (ushort)speed;
 
             actuator.SetSpeed(speed);
-            actuator.SetTargetAngle(targetAngle);
+            actuator.SetTargetAngle(targetAngle); // Maintain internal state as normal degrees
 
+            byte[] payload = new byte[7];
+            payload[0] = (byte)actuatorId;
+            BitConverter.GetBytes(angleInt).CopyTo(payload, 1);
+            BitConverter.GetBytes(speedUshort).CopyTo(payload, 5);
 
-            var dto = new MoveActuatorWireDTO(
-            )
-            {
-                ObjectIdx = actuatorId,
-                TargetAngle = targetAngle,
-                Speed = speed
-            };
-            string json = JsonCommandSerializer.ToJson(dto);
-            await _serialCommunication.SendJsonLineAsync(json);
+            await _serialCommunication.SendCommandAsync(ProtocolMessageTypes.MOVE, payload);
         }
     }
 }

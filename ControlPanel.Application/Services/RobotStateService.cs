@@ -1,4 +1,5 @@
-﻿using ControlPanel.Application.DTOs;
+using ControlPanel.Application.DTOs.SerialCommands;
+using ControlPanel.Application.DTOs;
 using ControlPanel.Application.DTOs.IncomingMessages;
 using ControlPanel.Application.Interfaces;
 using ControlPanel.Application.Mapping;
@@ -38,11 +39,11 @@ namespace ControlPanel.Application.Services
 
         public void StartListening()
         {
-            _serialCommunication.MessageReceived += OnMessageReceived;
+            _serialCommunication.FrameReceived += OnFrameReceived;
         }
         public void StopListening()
         {
-            _serialCommunication.MessageReceived -= OnMessageReceived;
+            _serialCommunication.FrameReceived -= OnFrameReceived;
         }
 
         public RobotStateDTO GetRobotState()
@@ -73,75 +74,85 @@ namespace ControlPanel.Application.Services
 
         private async Task RequestRobotConfig()
         {   
-            var request = new { Type = "GET_CONFIG", ManipulatedObject = "SYSTEM"};
-            string json = JsonSerializer.Serialize(request);
-            await _serialCommunication.SendJsonLineAsync(json);
-            
+            await _serialCommunication.SendCommandAsync(ControlPanel.Domain.Constants.ProtocolMessageTypes.GET_CONFIG, Array.Empty<byte>());
         }
-        private async void OnMessageReceived(object? sender, string json)
+        private async void OnFrameReceived(object? sender, BinaryMessage frame)
         {
             try
             {
-                using var doc = JsonDocument.Parse(json);
-                var type = doc.RootElement.GetProperty("Type").GetString();
-
-                switch (type)
+                switch (frame.MessageType)
                 {
-                    case "CONFIG":
-                        HandleConfig(json);
+                    case ControlPanel.Domain.Constants.ProtocolMessageTypes.CONFIG:
+                        HandleConfig(frame.Payload);
                         break;
-                    case "HEARTBEAT":
-                        await HandleHeartbeat(json);
+                    case ControlPanel.Domain.Constants.ProtocolMessageTypes.HEARTBEAT:
+                        await HandleHeartbeat(frame.Payload);
                         break;
-                    case "INFO":
-                        HandleActuatorInfo(json);
+                    case ControlPanel.Domain.Constants.ProtocolMessageTypes.INFO:
+                        HandleActuatorInfo(frame.Payload);
                         break;
                 }
             }
-            catch (JsonException)
+            catch (Exception ex)
             {
-                Debug.WriteLine("Received invalid JSON: " + json);
+                Debug.WriteLine("Error processing binary frame: " + ex.Message);
             }
         }
 
-        private void HandleConfig(string json)
+        private void HandleConfig(byte[] payload)
         {
-            var dto = JsonSerializer.Deserialize<RobotConfigDTO>(json, JsonOptions);
-            if (dto == null)
-                return;
+            if (payload.Length < 30) return;
 
-            var steppers = dto.Steppers.Select(s => new Actuator(s.Id, new ActuatorWorkingLimits(s.RangeStart, s.RangeEnd)));
-            var servos = dto.Servos.Select(s => new Actuator(s.Id, new ActuatorWorkingLimits(s.RangeStart, s.RangeEnd)));
-            var config = new RobotConfig(steppers, servos, dto.UserPins.AsReadOnly());
+            var steppers = new List<Actuator>
+            {
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Stepper1, new ActuatorWorkingLimits(BitConverter.ToInt32(payload, 0) / 100.0, BitConverter.ToInt32(payload, 4) / 100.0)),
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Stepper2, new ActuatorWorkingLimits(BitConverter.ToInt32(payload, 9) / 100.0, BitConverter.ToInt32(payload, 13) / 100.0))
+            };
+
+            var servos = new List<Actuator>
+            {
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo1, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 18), BitConverter.ToUInt16(payload, 20))),
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo2, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 22), BitConverter.ToUInt16(payload, 24))),
+                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo3, new ActuatorWorkingLimits(BitConverter.ToUInt16(payload, 26), BitConverter.ToUInt16(payload, 28)))
+            };
+
+            var config = new RobotConfig(steppers, servos, new Dictionary<string, int>());
 
             _configRequested = false;
             Robot.ApplyConfiguration(config);
             RobotConfigured?.Invoke(this, EventArgs.Empty);
         }
 
-        private void HandleActuatorInfo(string json)
+        private void HandleActuatorInfo(byte[] payload)
         {
-            var dto = JsonSerializer.Deserialize<ActuatorDto>(json, JsonOptions);
-            if(dto == null) 
-                return;
+            if (payload.Length < 10) return;
 
-            string manipulatedObject = dto.ManipulatedObject;
-            if(manipulatedObject == "ACTUATOR")
+            byte actuatorId = payload[0];
+            double currentAngle = BitConverter.ToInt32(payload, 1) / 100.0;
+            byte statusByte = payload[9];
+
+            ActuatorState status = statusByte switch
             {
-                Actuator? actuator = Robot.GetActuatorById(dto.ObjectIdx);
-                if (actuator != null)
-                {
-                    Robot.UpdateActuator(actuator, dto.ActuatorState.CurrentAngle, dto.ActuatorState.Status.ToDomain());
-                    StateUpdated?.Invoke(this, EventArgs.Empty);
-                }
+                0 => ActuatorState.Idle,
+                1 => ActuatorState.Moving,
+                2 => ActuatorState.Forbidden,
+                3 => ActuatorState.EStop,
+                4 => ActuatorState.Moving,
+                5 => ActuatorState.Idle,
+                _ => ActuatorState.Error
+            };
+
+            Actuator? actuator = Robot.GetActuatorById(actuatorId);
+            if (actuator != null)
+            {
+                Robot.UpdateActuator(actuator, currentAngle, status);
+                StateUpdated?.Invoke(this, EventArgs.Empty);
             }
         }
 
-        private async Task HandleHeartbeat(string json)
+        private async Task HandleHeartbeat(byte[] payload)
         {
-            var dto = JsonSerializer.Deserialize<HeartbeatDTO>(json, JsonOptions);
-            if(dto == null) 
-                return;
+            if (payload.Length < 38) return;
 
             Robot.RegisterHeartbeat();
 
@@ -155,21 +166,30 @@ namespace ControlPanel.Application.Services
                 return;
             }
 
-            foreach(var encoder in dto.Values.Encoders)
-            {
-                Actuator? actuator = Robot.GetActuatorById(encoder.Id);
-                if(actuator == null)
-                    continue;
-                Robot.UpdateActuator(actuator, currentAngle:  encoder.JointAngle);
-            }
+            // Stepper 0
+            double stepper0Angle = BitConverter.ToInt32(payload, 6) / 100.0;
+            Actuator? stepper0 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Stepper1);
+            if (stepper0 != null) Robot.UpdateActuator(stepper0, currentAngle: stepper0Angle);
 
-            foreach(var servo in dto.Values.Servos)
-            {
-                Actuator? actuator = Robot.GetActuatorById(servo.Id);
-                if (actuator == null)
-                    continue;
-                Robot.UpdateActuator(actuator, currentAngle: servo.Angle);
-            }
+            // Stepper 1
+            double stepper1Angle = BitConverter.ToInt32(payload, 14) / 100.0;
+            Actuator? stepper1 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Stepper2);
+            if (stepper1 != null) Robot.UpdateActuator(stepper1, currentAngle: stepper1Angle);
+
+            // Servo 0
+            double servo0Angle = BitConverter.ToUInt16(payload, 23);
+            Actuator? servo0 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo1);
+            if (servo0 != null) Robot.UpdateActuator(servo0, currentAngle: servo0Angle);
+
+            // Servo 1
+            double servo1Angle = BitConverter.ToUInt16(payload, 28);
+            Actuator? servo1 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo2);
+            if (servo1 != null) Robot.UpdateActuator(servo1, currentAngle: servo1Angle);
+
+            // Servo 2
+            double servo2Angle = BitConverter.ToUInt16(payload, 33);
+            Actuator? servo2 = Robot.GetActuatorById(ControlPanel.Domain.Constants.ActuatorIds.Servo3);
+            if (servo2 != null) Robot.UpdateActuator(servo2, currentAngle: servo2Angle);
 
             StateUpdated?.Invoke(this, EventArgs.Empty);
         }

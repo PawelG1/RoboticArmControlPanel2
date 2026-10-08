@@ -1,4 +1,4 @@
-﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Interfaces;
 using ControlPanel.Application.Services;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Presentation.WPF.Common;
@@ -27,11 +27,11 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             ConnectCommand = new RelayCommand(Connect);
             DisconnectCommand = new RelayCommand(Disconnect);
 
-            _serialCommunication.MessageReceived += OnMessageReceived;
+            _serialCommunication.FrameReceived += OnFrameReceived;
         }
         public override void Dispose()
         {
-            _serialCommunication.MessageReceived -= OnMessageReceived;
+            _serialCommunication.FrameReceived -= OnFrameReceived;
         }
 
         private string _title;
@@ -91,6 +91,17 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
         }
 
+        private string _translatedCommunicationLog = "";
+        public string TranslatedCommunicationLog
+        {
+            get => _translatedCommunicationLog;
+            set
+            {
+                _translatedCommunicationLog = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         public ICommand GetAvailableComPortsCommand { get; set; }
 
         public void GetAvailableComPorts(object _)
@@ -141,13 +152,42 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             SelectedComPortName = string.IsNullOrWhiteSpace(configuredPortName) ? AvailableComPorts.First() : configuredPortName;
         }
 
-        private void OnMessageReceived(object? sender, string message)
+        private void OnFrameReceived(object? sender, ControlPanel.Application.DTOs.SerialCommands.BinaryMessage frame)
         {
             App.Current.Dispatcher.Invoke(() =>
             {
-                CommunicationLog += $"{message}\n";
+                CommunicationLog += $"Type: 0x{frame.MessageType:X2}, Payload: {BitConverter.ToString(frame.Payload)}\n";
+                TranslatedCommunicationLog += TranslateBinaryFrame(frame) + "\n";
                 ListOfActuatorsAsText = GetAllActuatorsNamesAndValuesAsText();
             });
+        }
+
+        private string TranslateBinaryFrame(ControlPanel.Application.DTOs.SerialCommands.BinaryMessage frame)
+        {
+            if (frame.MessageType == 0x84 && frame.Payload.Length >= 38)
+            {
+                uint uptime = BitConverter.ToUInt32(frame.Payload, 0);
+                byte eStop = frame.Payload[4];
+                byte status = frame.Payload[5];
+                double stp0Angle = BitConverter.ToInt32(frame.Payload, 6) / 100.0;
+                double stp1Angle = BitConverter.ToInt32(frame.Payload, 14) / 100.0;
+                return $"HEARTBEAT: Uptime={uptime}ms, EStop={eStop}, Status={status}, Stp0={stp0Angle}°, Stp1={stp1Angle}°";
+            }
+            else if (frame.MessageType == 0x81 && frame.Payload.Length >= 3)
+            {
+                byte objId = frame.Payload[0];
+                ushort errCode = BitConverter.ToUInt16(frame.Payload, 1);
+                return $"ERROR: ObjId=0x{objId:X2}, Code=0x{errCode:X4}";
+            }
+            else if (frame.MessageType == 0x80 && frame.Payload.Length >= 3)
+            {
+                byte cmd = frame.Payload[0];
+                byte res = frame.Payload[1];
+                byte actId = frame.Payload[2];
+                return $"ACK: Cmd=0x{cmd:X2}, Result={res}, ActId={actId}";
+            }
+            
+            return $"UNKNOWN (Type 0x{frame.MessageType:X2})";
         }
 
         private string GetAllActuatorsNamesAndValuesAsText()

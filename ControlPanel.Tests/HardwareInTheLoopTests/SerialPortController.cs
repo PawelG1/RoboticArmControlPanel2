@@ -1,4 +1,4 @@
-﻿using ControlPanel.Infrastructure.Hardware;
+using ControlPanel.Infrastructure.Hardware;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ControlPanel.Tests.UnitTests
@@ -33,7 +33,7 @@ namespace ControlPanel.Tests.UnitTests
         {
             //Arrange
             //Act
-            port.SendRequestAsync("Test request from unit test").Wait();    
+            port.WriteFrameAsync(new ControlPanel.Infrastructure.Hardware.Protocol.BinaryFrame() { MessageType = 0x01, Sequence = 1, Payload = new byte[] { 0xFF } }).Wait();
 
             //Assert
             Assert.Pass();
