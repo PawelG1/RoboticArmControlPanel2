@@ -1,4 +1,3 @@
-using ControlPanel.Application.DTOs;
 using ControlPanel.Application.Interfaces;
 using ControlPanel.Domain.Entities;
 using ControlPanel.Domain.Enums;
@@ -57,12 +56,14 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         public ICommand RecordStepCommand { get; }
         public void RecordStep(object _)
         {
-            RobotStateDTO robotStateDTO = _robotStateService.GetRobotState();
-            if (!robotStateDTO.IsConfigured)
+            if (Actuators == null || Actuators.Count == 0)
                 return;
-            //TODO: get speed set by user on UI
-            int defaultSpeed = 200;
-            Step recordedStep = _robotSequenceService.RecordStep(StepType.Move, robotStateDTO, defaultSpeed);
+            if (!_robotStateService.Robot.IsConfigured)
+                return;
+
+            IEnumerable<ActuatorTarget> targets = Actuators.Select(actuator =>
+                new ActuatorTarget(actuator.Id, actuator.TargetAngle, actuator.Speed));
+            Step recordedStep = _robotSequenceService.RecordStep(StepType.Move, targets);
             Steps.Add(new SequenceStepViewModel(recordedStep));
         }
 

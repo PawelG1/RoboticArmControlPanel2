@@ -7,40 +7,76 @@
     mc:Ignorable="d"
     d:DesignHeight="450" d:DesignWidth="800">
     <Grid Margin="10">
-        <StackPanel>
-            <GroupBox Header="Actuator Calibration &amp; Limits">
-                <StackPanel Margin="10">
-                    <TextBlock Text="Select Actuator:" Margin="0,0,0,5" />
-                    <ComboBox ItemsSource="{Binding Actuators}" 
-                              SelectedItem="{Binding SelectedActuator}" 
-                              DisplayMemberPath="Name" 
-                              Width="200" HorizontalAlignment="Left" Margin="0,0,0,15" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-                    <CheckBox Content="Set Zero (Aktualny kąt enkodera staje się zerem)" 
-                              IsChecked="{Binding SetZero}" Margin="0,0,0,10"/>
-                    
-                    <CheckBox Content="Invert Direction (Wartość odwrócenia kierunku)" 
-                              IsChecked="{Binding InvertDir}" Margin="0,0,0,10"/>
+        <GroupBox Grid.Column="0" Header="Actuators" Margin="0,0,10,0">
+            <ListView ItemsSource="{Binding Actuators}" SelectedItem="{Binding SelectedActuator}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="2">
+                            <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                            <TextBlock Text="{Binding MinAngle, StringFormat=Min: {0:F2}}" />
+                            <TextBlock Text="{Binding MaxAngle, StringFormat=Max: {0:F2}}" />
+                            <TextBlock Text="{Binding Acceleration, StringFormat=Accel: {0}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </GroupBox>
 
-                    <CheckBox Content="Write Invert Direction to EEPROM (Zapisz ustawienie do pamięci)" 
-                              IsChecked="{Binding WriteInvertDir}" Margin="0,0,0,15"/>
+        <GroupBox Grid.Column="1" Header="Actuator Calibration &amp; Limits">
+            <StackPanel Margin="10">
+                <TextBlock Text="Select Actuator:" Margin="0,0,0,5" />
+                <ComboBox ItemsSource="{Binding Actuators}"
+                          SelectedItem="{Binding SelectedActuator}"
+                          DisplayMemberPath="Name"
+                          Width="200" HorizontalAlignment="Left" Margin="0,0,0,15" />
 
-                    <Button Content="Calibrate" 
-                            Command="{Binding CalibrateCommand}" 
-                            Width="150" HorizontalAlignment="Left" Padding="5" Margin="0,0,0,20"/>
+                <CheckBox Content="Set Zero (Aktualny kąt enkodera staje się zerem)"
+                          IsChecked="{Binding SetZero}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Range Start (Min Angle):" Margin="0,0,0,5" />
-                    <TextBox Text="{Binding NewMinAngle}" Width="150" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                <CheckBox Content="Invert Direction (Wartość odwrócenia kierunku)"
+                          IsChecked="{Binding InvertDir}" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Range End (Max Angle):" Margin="0,0,0,5" />
-                    <TextBox Text="{Binding NewMaxAngle}" Width="150" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+                <CheckBox Content="Write Invert Direction to EEPROM (Zapisz ustawienie do pamięci)"
+                          IsChecked="{Binding WriteInvertDir}" Margin="0,0,0,15"/>
 
-                    <Button Content="Set Limits" 
-                            Command="{Binding SetLimitsCommand}" 
-                            Width="150" HorizontalAlignment="Left" Padding="5"/>
-                </StackPanel>
-            </GroupBox>
-        </StackPanel>
+                <Button Content="Calibrate"
+                        Command="{Binding CalibrateCommand}"
+                        Width="150" HorizontalAlignment="Left" Padding="5" Margin="0,0,0,20"/>
+
+                <TextBlock Text="Range Start (Min Angle):" Margin="0,0,0,5" />
+                <TextBox Text="{Binding NewMinAngle}" Width="150" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Range End (Max Angle):" Margin="0,0,0,5" />
+                <TextBox Text="{Binding NewMaxAngle}" Width="150" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+
+                <Button Content="Set Limits"
+                        Command="{Binding SetLimitsCommand}"
+                        Width="150" HorizontalAlignment="Left" Padding="5" Margin="0,0,0,20"/>
+
+                <TextBlock Text="Acceleration / Deceleration Ramp (1–255)" Margin="0,0,0,5" />
+                <DockPanel LastChildFill="True" Margin="0,0,0,10">
+                    <TextBox
+                        Width="60"
+                        Margin="8,0,0,0"
+                        DockPanel.Dock="Right"
+                        Text="{Binding NewAcceleration, UpdateSourceTrigger=PropertyChanged}" />
+                    <Slider
+                        IsSnapToTickEnabled="True"
+                        Maximum="255"
+                        Minimum="1"
+                        TickFrequency="1"
+                        Value="{Binding NewAcceleration}"
+                        VerticalAlignment="Center" />
+                </DockPanel>
+                <Button Content="Set Acceleration"
+                        Command="{Binding SetAccelerationCommand}"
+                        Width="150" HorizontalAlignment="Left" Padding="5"/>
+            </StackPanel>
+        </GroupBox>
     </Grid>
 </UserControl>
-

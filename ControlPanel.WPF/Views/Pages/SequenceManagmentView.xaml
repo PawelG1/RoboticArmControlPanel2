@@ -63,9 +63,10 @@
                                 <DataTemplate>
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="*" />
-                                            <RowDefinition Height="*" />
-                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="auto" SharedSizeGroup="Col1" />
@@ -101,6 +102,31 @@
                                                 </MultiBinding>
                                             </TextBlock.Text>
                                         </TextBlock>
+
+                                        <DockPanel
+                                            Grid.Row="3"
+                                            Grid.ColumnSpan="3"
+                                            Margin="0,4,0,2"
+                                            LastChildFill="True">
+                                            <TextBlock
+                                                Margin="0,0,8,0"
+                                                VerticalAlignment="Center"
+                                                DockPanel.Dock="Left"
+                                                Text="Speed" />
+                                            <TextBlock
+                                                MinWidth="28"
+                                                Margin="8,0,0,0"
+                                                VerticalAlignment="Center"
+                                                DockPanel.Dock="Right"
+                                                Text="{Binding Speed}" />
+                                            <Slider
+                                                IsSnapToTickEnabled="True"
+                                                Maximum="255"
+                                                Minimum="1"
+                                                TickFrequency="1"
+                                                Value="{Binding Speed}"
+                                                VerticalAlignment="Center" />
+                                        </DockPanel>
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
@@ -139,6 +165,7 @@
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Binding="{Binding ActuatorId}" Header="Id" />
                                             <DataGridTextColumn Binding="{Binding TargetAngle}" Header="Target Angle" />
+                                            <DataGridTextColumn Binding="{Binding Speed}" Header="Speed" />
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </DataTemplate>

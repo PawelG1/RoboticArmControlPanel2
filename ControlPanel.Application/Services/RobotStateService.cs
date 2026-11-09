@@ -101,19 +101,19 @@ namespace ControlPanel.Application.Services
 
         private void HandleConfig(byte[] payload)
         {
-            if (payload.Length < 45) return;
+            if (payload.Length < 50) return;
 
             var steppers = new List<Actuator>
             {
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Stepper1, new ActuatorWorkingLimits(BitConverter.ToInt32(payload, 0) / 100.0, BitConverter.ToInt32(payload, 4) / 100.0)),
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Stepper2, new ActuatorWorkingLimits(BitConverter.ToInt32(payload, 9) / 100.0, BitConverter.ToInt32(payload, 13) / 100.0))
+                CreateActuatorFromConfig(payload, ControlPanel.Domain.Constants.ActuatorIds.Stepper1, 0),
+                CreateActuatorFromConfig(payload, ControlPanel.Domain.Constants.ActuatorIds.Stepper2, 10)
             };
 
             var servos = new List<Actuator>
             {
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo1, new ActuatorWorkingLimits(BitConverter.ToInt32(payload, 18) / 100.0, BitConverter.ToInt32(payload, 22) / 100.0)),
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo2, new ActuatorWorkingLimits(BitConverter.ToInt32(payload, 27) / 100.0, BitConverter.ToInt32(payload, 31) / 100.0)),
-                new Actuator(ControlPanel.Domain.Constants.ActuatorIds.Servo3, new ActuatorWorkingLimits(BitConverter.ToInt32(payload, 36) / 100.0, BitConverter.ToInt32(payload, 40) / 100.0))
+                CreateActuatorFromConfig(payload, ControlPanel.Domain.Constants.ActuatorIds.Servo1, 20),
+                CreateActuatorFromConfig(payload, ControlPanel.Domain.Constants.ActuatorIds.Servo2, 30),
+                CreateActuatorFromConfig(payload, ControlPanel.Domain.Constants.ActuatorIds.Servo3, 40)
             };
 
             var config = new RobotConfig(steppers, servos, new Dictionary<string, int>());
@@ -121,6 +121,21 @@ namespace ControlPanel.Application.Services
             _configRequested = false;
             Robot.ApplyConfiguration(config);
             RobotConfigured?.Invoke(this, EventArgs.Empty);
+        }
+
+        private static Actuator CreateActuatorFromConfig(byte[] payload, byte id, int offset)
+        {
+            double min = BitConverter.ToInt32(payload, offset) / 100.0;
+            double max = BitConverter.ToInt32(payload, offset + 4) / 100.0;
+            byte flags = payload[offset + 8];
+            int acceleration = payload[offset + 9];
+            if (acceleration < 1)
+                acceleration = 100;
+
+            var actuator = new Actuator(id, new ActuatorWorkingLimits(min, max), acceleration);
+            if ((flags & 0x02) != 0)
+                actuator.SetRotatingDirection(RotatingDirection.CounterClockwise);
+            return actuator;
         }
 
         private void HandleActuatorInfo(byte[] payload)

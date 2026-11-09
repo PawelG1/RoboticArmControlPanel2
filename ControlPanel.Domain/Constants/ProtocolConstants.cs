@@ -9,7 +9,7 @@ namespace ControlPanel.Domain.Constants
         public const byte MOVE = 0x04;
         public const byte SET_LIMITS = 0x05;
         public const byte CALIBRATE = 0x06;
-        public const byte IO_SET = 0x07;
+        public const byte SET_ACCELERATION = 0x07;
         public const byte IO_GET = 0x08;
         public const byte BUZZER = 0x09;
 

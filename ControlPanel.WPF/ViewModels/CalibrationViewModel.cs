@@ -26,9 +26,11 @@ namespace ControlPanel.Presentation.WPF.ViewModels
                 {
                     NewMinAngle = _selectedActuator.MinAngle;
                     NewMaxAngle = _selectedActuator.MaxAngle;
+                    NewAcceleration = _selectedActuator.Acceleration;
                 }
                 ((RelayCommand)CalibrateCommand).RaiseCanExecuteChanged();
                 ((RelayCommand)SetLimitsCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)SetAccelerationCommand).RaiseCanExecuteChanged();
             }
         }
 
@@ -67,8 +69,27 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             set { _newMaxAngle = value; NotifyPropertyChanged(nameof(NewMaxAngle)); }
         }
 
+        private int _newAcceleration = 100;
+        public int NewAcceleration
+        {
+            get => _newAcceleration;
+            set
+            {
+                int clamped = Math.Clamp(value, 1, 255);
+                if (_newAcceleration == clamped)
+                {
+                    if (value != clamped)
+                        NotifyPropertyChanged(nameof(NewAcceleration));
+                    return;
+                }
+                _newAcceleration = clamped;
+                NotifyPropertyChanged(nameof(NewAcceleration));
+            }
+        }
+
         public ICommand CalibrateCommand { get; }
         public ICommand SetLimitsCommand { get; }
+        public ICommand SetAccelerationCommand { get; }
 
         public CalibrationViewModel(IRobotStateService robotStateService, IRobotControlService robotControlService)
         {
@@ -79,6 +100,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
             CalibrateCommand = new RelayCommand(Calibrate, CanExecuteActuatorCommand);
             SetLimitsCommand = new RelayCommand(SetLimits, CanExecuteActuatorCommand);
+            SetAccelerationCommand = new RelayCommand(SetAcceleration, CanExecuteActuatorCommand);
 
             if (_robotStateService.Robot.IsConfigured)
             {
@@ -114,7 +136,8 @@ namespace ControlPanel.Presentation.WPF.ViewModels
                     actuator.GetWorkingLimits.MinAngle,
                     actuator.GetWorkingLimits.MaxAngle,
                     actuator.GetCurrentAngle,
-                    _robotControlService
+                    _robotControlService,
+                    actuator.GetAcceleration
                 ));
             }
 
@@ -133,6 +156,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
                 {
                     NewMinAngle = SelectedActuator.MinAngle;
                     NewMaxAngle = SelectedActuator.MaxAngle;
+                    NewAcceleration = SelectedActuator.Acceleration;
                 }
             }
         }
@@ -162,6 +186,23 @@ namespace ControlPanel.Presentation.WPF.ViewModels
 
             _robotControlService.SetLimitsActuator(SelectedActuator.Id, NewMinAngle, NewMaxAngle);
             _robotControlService.GetConfig();
+        }
+
+        private async void SetAcceleration(object? obj)
+        {
+            if (SelectedActuator == null) return;
+
+            try
+            {
+                int acceleration = Math.Clamp(NewAcceleration, 1, 255);
+                await _robotControlService.SetAccelerationActuator(SelectedActuator.Id, acceleration);
+                SelectedActuator.Acceleration = acceleration;
+                await _robotControlService.GetConfig();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SET ACCELERATION ERROR] {ex.Message}");
+            }
         }
     }
 }

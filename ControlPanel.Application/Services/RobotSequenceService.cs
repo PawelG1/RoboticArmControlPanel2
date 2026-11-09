@@ -1,4 +1,3 @@
-using ControlPanel.Application.DTOs;
 using ControlPanel.Application.Interfaces;
 using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
@@ -40,20 +39,16 @@ namespace ControlPanel.Application.Services
             }
         }
 
-        public Step RecordStep(StepType stepType, RobotStateDTO robotState, int movementSpeed)
+        public Step RecordStep(StepType stepType, IEnumerable<ActuatorTarget> targets)
         {
-            RobotPose pose = ToPose(robotState);
-            Step newStep = new Step(stepType, pose, movementSpeed);
+            ActuatorTarget[] recordedTargets = targets.ToArray();
+            int legacySpeed = recordedTargets.Select(target => target.Speed).FirstOrDefault(speed => speed is >= 1 and <= 255);
+            if (legacySpeed == 0)
+                legacySpeed = 200;
+
+            Step newStep = new Step(stepType, new RobotPose(recordedTargets), legacySpeed);
             _steps.Add(newStep);
             return newStep;
-        }
-
-        private static RobotPose ToPose(RobotStateDTO robotState)
-        {
-            IEnumerable<ActuatorTarget> targets = robotState.Actuators
-                .Where(actuator => actuator?.ActuatorState != null)
-                .Select(actuator => new ActuatorTarget(actuator.ObjectIdx, actuator.ActuatorState.TargetAngle));
-            return new RobotPose(targets);
         }
 
         public Step RecordStep(StepType stepType, TimeSpan time)
@@ -105,12 +100,15 @@ namespace ControlPanel.Application.Services
             }
             else if (nextStep.StepType == StepType.Move && nextStep.Pose != null)
             {
-                int movementSpeed = nextStep.MovementSpeed;
-                if (movementSpeed > 255) movementSpeed = 200; // firmware limit
-
                 foreach (ActuatorTarget target in nextStep.Pose.ActuatorTargets)
                 {
-                    await _robotControlService.MoveActuator(target.ActuatorId, target.TargetAngle, movementSpeed);
+                    int speed = target.Speed is >= 1 and <= 255
+                        ? target.Speed
+                        : nextStep.MovementSpeed;
+                    if (speed < 1 || speed > 255)
+                        speed = 200;
+
+                    await _robotControlService.MoveActuator(target.ActuatorId, target.TargetAngle, speed);
                 }
 
                 // Wait for movement to finish

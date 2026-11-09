@@ -29,9 +29,10 @@ namespace ControlPanel.Application.UseCases
             }
 
             int angleInt = (int)Math.Round(targetAngle * 100);
-            ushort speedUshort = (ushort)speed;
+            int clampedSpeed = Math.Clamp(speed, 1, 255);
+            ushort speedUshort = (ushort)clampedSpeed;
 
-            actuator.SetSpeed(speed);
+            actuator.SetSpeed(clampedSpeed);
             actuator.SetTargetAngle(targetAngle); // Maintain internal state as normal degrees
 
             byte[] payload = new byte[7];

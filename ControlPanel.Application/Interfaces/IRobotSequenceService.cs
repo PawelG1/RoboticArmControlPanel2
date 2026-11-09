@@ -1,4 +1,3 @@
-using ControlPanel.Application.DTOs;
 using ControlPanel.Domain.Enums;
 using ControlPanel.Domain.ValueObjects;
 using System;
@@ -11,7 +10,7 @@ namespace ControlPanel.Application.Interfaces
     {
         public int NextStepIdx { get;}
         public event EventHandler? OnExecuteNextStep;
-        public Step RecordStep(StepType stepType, RobotStateDTO robotState, int movementSpeed);
+        public Step RecordStep(StepType stepType, IEnumerable<ActuatorTarget> targets);
         public Step RecordStep(StepType stepType, TimeSpan time);
         public IEnumerable<Step> GetAllSteps();
         public Step GetStep(int idx);
