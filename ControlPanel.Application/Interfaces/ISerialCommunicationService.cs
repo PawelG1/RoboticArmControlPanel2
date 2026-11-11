@@ -1,15 +1,19 @@
-﻿namespace ControlPanel.Application.Interfaces;
+using ControlPanel.Application.DTOs.SerialCommands;
+using System;
+using System.Threading.Tasks;
+
+namespace ControlPanel.Application.Interfaces;
 
 public interface ISerialCommunicationService
 {
-    event EventHandler<string> MessageReceived;
+    event EventHandler<BinaryMessage> FrameReceived;
 
-    /// <summary> Sends one line of JSON and reads one line of response (request/response over serial). </summary>
-    Task<string?> SendJsonRequestAsync(string jsonLine);
-    /// <summary>
-    /// sends one line of JSON without reading response (one-way command over serial). Use for commands that don't require confirmation or response.
-    /// </summary>
-    Task<bool> SendJsonLineAsync(string jsonLine);
+    /// <summary> Sends a binary frame and awaits a matching ACK or response. </summary>
+    Task<BinaryMessage?> SendRequestAsync(byte messageType, byte[] payload);
+    
+    /// <summary> Sends a binary frame without waiting for response. </summary>
+    Task<bool> SendCommandAsync(byte messageType, byte[] payload);
+
     void ConfigureConnection(string portName);
     string[] GetAvailableSerialPorts();
     string GetSelectedPortName();

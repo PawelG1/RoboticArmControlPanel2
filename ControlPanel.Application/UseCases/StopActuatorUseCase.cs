@@ -1,10 +1,10 @@
-﻿using ControlPanel.Application.DTOs.SerialCommands;
 using ControlPanel.Application.Interfaces;
-using ControlPanel.Application.Serialization;
 using ControlPanel.Domain.Entities;
+using ControlPanel.Domain.Constants;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ControlPanel.Application.UseCases
 {
@@ -24,12 +24,11 @@ namespace ControlPanel.Application.UseCases
             if (actuator is null)
                 throw new ArgumentException($"Actuator with ID {actuatorId} not found.");
 
-            var dto = new StopActuatorWireDTO()
-            {
-                ObjectIdx = actuatorId
-            };
-            string json = JsonCommandSerializer.ToJson(dto);
-            await _serialCommunication.SendJsonLineAsync(json);
+            byte messageType = ProtocolMessageTypes.STOP;
+            byte[] payload = new byte[] { (byte)actuatorId };
+            
+            await _serialCommunication.SendCommandAsync(messageType, payload);
+            
             actuator.SetState(Domain.Enums.ActuatorState.Idle);
         }
     }

@@ -80,7 +80,8 @@ namespace ControlPanel.Presentation.WPF.ViewModels
                         actuator.GetWorkingLimits.MinAngle,
                         actuator.GetWorkingLimits.MaxAngle,
                         actuator.GetCurrentAngle,
-                        _robotControlService
+                        _robotControlService,
+                        actuator.GetAcceleration
                         );
                     Actuators?.Add(
                        actuatorVm

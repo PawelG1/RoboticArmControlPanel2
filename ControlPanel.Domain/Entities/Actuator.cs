@@ -11,14 +11,16 @@ namespace ControlPanel.Domain.Entities
         protected ActuatorWorkingLimits _workingLimits;
         protected double _targetAngle;
         protected double _speed;
+        protected int _acceleration = 100;
         protected ActuatorState _state;
         protected RotatingDirection _rotatingDirection;
 
-        public Actuator(int id, ActuatorWorkingLimits workingLimits)
+        public Actuator(int id, ActuatorWorkingLimits workingLimits, int acceleration = 100)
         {
             _id = id;
             SetWorkingLimits(workingLimits);
-            SetSpeed(0);
+            SetAcceleration(acceleration);
+            SetSpeed(100);
             SetRotatingDirection(RotatingDirection.Clockwise);
             SetState(ActuatorState.Idle);
         }
@@ -46,9 +48,20 @@ namespace ControlPanel.Domain.Entities
 
         public double GetTargetAngle() => _targetAngle;
 
+        public int GetAcceleration => _acceleration;
+
+        public void SetAcceleration(int acceleration)
+        {
+            if (acceleration < 1 || acceleration > 255)
+            {
+                throw new ArgumentOutOfRangeException(nameof(acceleration), acceleration, "Acceleration must be in range 1..255.");
+            }
+            _acceleration = acceleration;
+        }
+
         public double GetSpeed() => _speed;
         public void SetSpeed(double speed) {
-            if (speed < 0)
+            if (speed < 1 || speed > 255)
             {
                 throw new IncorrectActuatorSpeedException(speed);
             }

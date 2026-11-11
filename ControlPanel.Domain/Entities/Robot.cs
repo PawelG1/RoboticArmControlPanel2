@@ -28,6 +28,7 @@ namespace ControlPanel.Domain.Entities
             _actuators.Clear();
             foreach (var actuator in config.AllActuators)
             {
+                actuator.SetAcceleration(actuator.GetAcceleration);
                 _actuators.Add(actuator);
             }
         }

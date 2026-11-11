@@ -1,4 +1,4 @@
-﻿using ControlPanel.Application.Interfaces;
+using ControlPanel.Application.Interfaces;
 using ControlPanel.Application.Services;
 using ControlPanel.Application.UseCases;
 using ControlPanel.Domain.Entities;
@@ -54,6 +54,10 @@ namespace ControlPanel.DI
             services.AddTransient<MoveActuatorUseCase>();
             services.AddTransient<StopActuatorUseCase>();
             services.AddTransient<StopAllActuatorsUseCase>();
+            services.AddTransient<CalibrateActuatorUseCase>();
+            services.AddTransient<SetLimitsActuatorUseCase>();
+            services.AddTransient<SetAccelerationActuatorUseCase>();
+            services.AddTransient<GetConfigUseCase>();
         }
 
     }

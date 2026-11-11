@@ -1,7 +1,7 @@
-﻿using ControlPanel.Application.DTOs.SerialCommands;
 using ControlPanel.Application.Interfaces;
-using ControlPanel.Application.Serialization;
 using ControlPanel.Domain.Entities;
+using ControlPanel.Domain.Constants;
+using System.Threading.Tasks;
 
 namespace ControlPanel.Application.UseCases
 { 
@@ -18,9 +18,10 @@ namespace ControlPanel.Application.UseCases
 
         public async Task Execute()
         {
-            var dto = new StopAllWireDTO();
-            string json = JsonCommandSerializer.ToJson(dto);
-            await _serialCommunication.SendJsonLineAsync(json);
+            byte messageType = ProtocolMessageTypes.STOP;
+            byte[] payload = new byte[] { ActuatorIds.All };
+            
+            await _serialCommunication.SendCommandAsync(messageType, payload);
 
             foreach (var actuator in _robot.GetAllActuators())
             {

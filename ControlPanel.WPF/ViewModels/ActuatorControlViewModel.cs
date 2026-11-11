@@ -16,7 +16,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         public double MinAngle { get; }
         public double MaxAngle { get; }
 
-        public ActuatorControlViewModel(int id, string name, double minAngle, double maxAngle,double initialAngle, IRobotControlService robotControlService)
+        public ActuatorControlViewModel(int id, string name, double minAngle, double maxAngle, double initialAngle, IRobotControlService robotControlService, int acceleration = 100)
         {
             Id = id;
             Name = name;
@@ -24,6 +24,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             MaxAngle = maxAngle;
             CurrentAngle = initialAngle;
             _targetAngle = initialAngle;
+            Acceleration = acceleration;
             NotifyPropertyChanged(nameof(TargetAngle));
             _robotControlService = robotControlService;
         }
@@ -62,7 +63,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
         }
 
-        private int _speed = 200;
+        private int _speed = 100;
         public int Speed
         {
             get
@@ -71,8 +72,33 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
             set
             {
-                _speed = value;
-                NotifyPropertyChanged();
+                int clamped = Math.Clamp(value, 1, 255);
+                if (_speed == clamped)
+                {
+                    if (value != clamped)
+                        NotifyPropertyChanged(nameof(Speed));
+                    return;
+                }
+                _speed = clamped;
+                NotifyPropertyChanged(nameof(Speed));
+            }
+        }
+
+        private int _acceleration = 100;
+        public int Acceleration
+        {
+            get => _acceleration;
+            set
+            {
+                int clamped = Math.Clamp(value, 1, 255);
+                if (_acceleration == clamped)
+                {
+                    if (value != clamped)
+                        NotifyPropertyChanged(nameof(Acceleration));
+                    return;
+                }
+                _acceleration = clamped;
+                NotifyPropertyChanged(nameof(Acceleration));
             }
         }
 

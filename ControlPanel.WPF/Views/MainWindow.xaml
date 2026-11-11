@@ -1,4 +1,4 @@
-﻿<Window
+<Window
     x:Class="ControlPanel.WPF.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -33,6 +33,10 @@
                 Margin="0,2"
                 Command="{Binding OpenSequenceManagmentPageCommand}"
                 Content="Open Sequence Managment" />
+            <Button
+                Margin="0,2"
+                Command="{Binding OpenCalibrationPageCommand}"
+                Content="Open Calibration" />
 
         </StackPanel>
         <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />

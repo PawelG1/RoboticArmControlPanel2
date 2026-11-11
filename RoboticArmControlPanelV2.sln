@@ -14,6 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notatki", "Notatki", "{8B3ED42E-CF5F-442E-B395-B8CC910C189E}"
 	ProjectSection(SolutionItems) = preProject
 		domain_Entities.md = domain_Entities.md
+		D:\ROBOARM\INO_esp32s3\test3\PROTOKOL_BINARNY_COBS.md = D:\ROBOARM\INO_esp32s3\test3\PROTOKOL_BINARNY_COBS.md
 		rzeczy_do_wyjasnienia.md = rzeczy_do_wyjasnienia.md
 		ToDos.md = ToDos.md
 	EndProjectSection
