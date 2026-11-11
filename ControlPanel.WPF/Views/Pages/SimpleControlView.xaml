@@ -82,12 +82,12 @@
                                         DockPanel.Dock="Right"
                                         Text="{Binding Speed}" />
                                     <Slider
+                                        VerticalAlignment="Center"
                                         IsSnapToTickEnabled="True"
                                         Maximum="255"
                                         Minimum="1"
                                         TickFrequency="1"
-                                        Value="{Binding Speed}"
-                                        VerticalAlignment="Center" />
+                                        Value="{Binding Speed}" />
                                 </DockPanel>
                             </Grid>
                         </DataTemplate>

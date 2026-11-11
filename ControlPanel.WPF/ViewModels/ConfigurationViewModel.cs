@@ -69,6 +69,28 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             }
         }
 
+        private bool _isConnected = false;
+        public bool IsConnected
+        {
+            get => _isConnected;
+            set
+            {
+                _isConnected = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        private bool _isRawLogVisible = false;
+        public bool IsRawLogVisible
+        {
+            get => _isRawLogVisible;
+            set
+            {
+                _isRawLogVisible = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         private string _listOfActuatorsAsText = "";
         public string ListOfActuatorsAsText
         {
