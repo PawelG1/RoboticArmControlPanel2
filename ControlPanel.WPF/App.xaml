@@ -3,5 +3,20 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:ControlPanel.WPF">
-    <Application.Resources />
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- tokens-->
+                <ResourceDictionary Source="/Views/Theme/Tokens/ColorsDark.xaml"/>
+                <ResourceDictionary Source="/Views/Theme/Tokens/Brushes.xaml"/>
+                <ResourceDictionary Source="/Views/Theme/Tokens/Dimensions.xaml"/>
+                
+                <!-- Styles-->
+                <ResourceDictionary Source="/Views/Theme/Styles/Typography.xaml"/>
+                <ResourceDictionary Source="/Views/Theme/Styles/CustomButton.xaml"/>
+                <ResourceDictionary Source="/Views/Theme/Styles/CustomComboBox.xaml"/>
+                <ResourceDictionary Source="/Views/Theme/Styles/CustomListView.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

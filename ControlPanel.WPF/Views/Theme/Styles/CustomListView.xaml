@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style x:Key="ListView.Base" TargetType="{x:Type ListView}">
+
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+
+        <Setter Property="BorderThickness" Value="{StaticResource Border.Thin}" />
+
+        <Setter Property="Padding" Value="{StaticResource Padding.Control}" />
+    </Style>
+
+    <!--  Domyślny styl dla każdego ListView  -->
+    <Style BasedOn="{StaticResource ListView.Base}" TargetType="{x:Type ListView}" />
+
+    <Style TargetType="{x:Type ListViewItem}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+
+        <Setter Property="Padding" Value="{StaticResource Padding.Control}" />
+
+        <Setter Property="Margin" Value="0,0,0,4" />
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.SurfaceRaised}" />
+            </Trigger>
+
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Primary}" />
+
+                <Setter Property="Foreground" Value="{DynamicResource Brush.OnPrimary}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>
