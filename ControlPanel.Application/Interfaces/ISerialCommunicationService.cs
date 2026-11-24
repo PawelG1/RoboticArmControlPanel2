@@ -14,7 +14,7 @@ public interface ISerialCommunicationService
     /// <summary> Sends a binary frame without waiting for response. </summary>
     Task<bool> SendCommandAsync(byte messageType, byte[] payload);
 
-    void ConfigureConnection(string portName);
+    void ConfigureConnection(string portName, int baudRate);
     string[] GetAvailableSerialPorts();
     string GetSelectedPortName();
     void Connect();

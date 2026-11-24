@@ -73,6 +73,15 @@ namespace ControlPanel.Infrastructure.Hardware
             _portName = portName;
         }
 
+        public void SetBaudRate(int baudRate)
+        {
+            if (baudRate <= 0)
+                throw new ArgumentOutOfRangeException(nameof(baudRate), "Baud rate must be greater than zero.");
+            if (_serialPort.IsOpen)
+                throw new AccessViolationException("Cannot change the baud rate while the serial port is open.");
+            _baudRate = baudRate;
+        }
+
         public string GetPortName() => _serialPort.PortName;
         public bool GetPortStatus() => _serialPort.IsOpen;
         public void SetReadTimeout(int timeout) => _readTimeout = timeout;

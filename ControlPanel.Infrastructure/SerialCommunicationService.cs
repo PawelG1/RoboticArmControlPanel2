@@ -18,9 +18,10 @@ public sealed class SerialCommunicationService : ISerialCommunicationService
         _serialPortController.OnFrameReceived += OnFrameReceivedFromPort;
     }
 
-    public void ConfigureConnection(string portName)
+    public void ConfigureConnection(string portName, int baudRate)
     {
         _serialPortController.SetPortName(portName);
+        _serialPortController.SetBaudRate(baudRate);
         _serialPortController.ConfigureSerialPort();
     }
 

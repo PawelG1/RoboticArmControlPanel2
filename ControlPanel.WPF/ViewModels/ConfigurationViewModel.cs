@@ -20,6 +20,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             _userInteractionService = userInteractionService;
             _robotStateService = robotStateService;
             _title = "Configuration Window";
+            SelectedBaudRate = 115200;
 
             SetUpDefaultConnection();
 
@@ -44,6 +45,30 @@ namespace ControlPanel.Presentation.WPF.ViewModels
             set
             {
                 _title = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        private readonly List<int> _availableBaudRates = new()
+        {
+            9600,
+            19200,
+            38400,
+            57600,
+            115200,
+            230400,
+            460800,
+            921600
+        };
+        public List<int> AvailableBaudRates => _availableBaudRates;
+
+        private int _selectedBaudRate;
+        public int SelectedBaudRate
+        {
+            get => _selectedBaudRate;
+            set
+            {
+                _selectedBaudRate = value;
                 NotifyPropertyChanged();
             }
         }
@@ -143,7 +168,7 @@ namespace ControlPanel.Presentation.WPF.ViewModels
         {
             try
             {
-                _serialCommunication.ConfigureConnection(SelectedComPortName);
+                _serialCommunication.ConfigureConnection(SelectedComPortName, SelectedBaudRate);
                 _serialCommunication.Connect();
 
             }catch(Exception e)
